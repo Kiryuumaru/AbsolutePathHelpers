@@ -115,7 +115,7 @@ jobs:
     needs:
     - PRE_SETUP
     - ABSOLUTEPATHHELPERSBUILD
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_CONDITION == 'true' && needs.ABSOLUTEPATHHELPERSBUILD.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_CONDITION == 'true' && needs.ABSOLUTEPATHHELPERSBUILD.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:
