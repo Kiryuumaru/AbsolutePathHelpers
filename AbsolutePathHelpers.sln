@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35111.106
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AbsolutePathHelpers", "AbsolutePathHelpers\AbsolutePathHelpers.csproj", "{253F1CEE-5F7B-4741-9282-655B8BF77810}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_build", "build\_build.csproj", "{20810683-C74D-4A65-AC3D-72DE0241B5B9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{253F1CEE-5F7B-4741-9282-655B8BF77810}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{253F1CEE-5F7B-4741-9282-655B8BF77810}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{253F1CEE-5F7B-4741-9282-655B8BF77810}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{253F1CEE-5F7B-4741-9282-655B8BF77810}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20810683-C74D-4A65-AC3D-72DE0241B5B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20810683-C74D-4A65-AC3D-72DE0241B5B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20810683-C74D-4A65-AC3D-72DE0241B5B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20810683-C74D-4A65-AC3D-72DE0241B5B9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0C76F4B0-9D19-4A0B-9B15-DC2E42EF1467}
+	EndGlobalSection
+EndGlobal

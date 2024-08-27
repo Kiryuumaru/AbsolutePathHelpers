@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>12</LangVersion>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Authors>Kiryuumaru</Authors>
+		<Company>Kiryuumaru</Company>
+		<Copyright>Kiryuumaru</Copyright>
+		<Description>AbsolutePath helpers for file and folder pathing.</Description>
+		<PackageTags>AbsolutePath, Helpers, File, Folder</PackageTags>
+		<PackageProjectUrl>https://github.com/Kiryuumaru/AbsolutePathHelpers</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Kiryuumaru/AbsolutePathHelpers</RepositoryUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\LICENSE" Pack="true" PackagePath="" />
+		<None Include="..\README.md" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="Assets\handle.exe" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="Assets\handle.exe" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+		<IsTrimmable>true</IsTrimmable>
+	</PropertyGroup>
+
+</Project>
