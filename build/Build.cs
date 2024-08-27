@@ -1,8 +1,11 @@
+using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Common.Attributes;
+using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Entry;
 using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Runner.Abstraction;
+using NukeBuildHelpers.RunContext.Extensions;
 
 class Build : BaseNukeBuildHelpers
 {
@@ -12,30 +15,66 @@ class Build : BaseNukeBuildHelpers
 
     public override string MainEnvironmentBranch => "master";
 
+    [SecretVariable("NUGET_AUTH_TOKEN")]
+    readonly string? NuGetAuthToken;
+
     [SecretVariable("GITHUB_TOKEN")]
-    readonly string GithubToken;
+    readonly string? GithubToken;
 
-    BuildEntry BuildEntry => _ => _
-        .AppId("sample_app")
-        .RunnerOS(RunnerOS.Windows2022)
-        .Execute(() =>
-        {
-            // build logic here
-        });
-
-    TestEntry TestEntry => _ => _
-        .AppId("sample_app")
+    BuildEntry AbsolutePathHelpersBuild => _ => _
+        .AppId("absolute_path_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
-        .Execute(() =>
+        .CommonReleaseAsset(OutputDirectory)
+        .Execute(context =>
         {
-            // test logic here
+            var projectPath = RootDirectory / "AbsolutePathHelpers" / "AbsolutePathHelpers.csproj";
+            var version = "0.0.0";
+            var releaseNotes = "";
+            if (context.TryGetBumpContext(out var bumpContext))
+            {
+                version = bumpContext.AppVersion.Version.ToString();
+                releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+            }
+            DotNetTasks.DotNetClean(_ => _
+                .SetProject(projectPath));
+            DotNetTasks.DotNetBuild(_ => _
+                .SetProjectFile(projectPath)
+                .SetConfiguration("Release"));
+            DotNetTasks.DotNetPack(_ => _
+                .SetProject(projectPath)
+                .SetConfiguration("Release")
+                .SetNoRestore(true)
+                .SetNoBuild(true)
+                .SetIncludeSymbols(true)
+                .SetSymbolPackageFormat("snupkg")
+                .SetVersion(version)
+                .SetPackageReleaseNotes(NormalizeReleaseNotes(releaseNotes))
+                .SetOutputDirectory(OutputDirectory));
         });
 
-    PublishEntry PublishEntry => _ => _
-        .AppId("sample_app")
+    PublishEntry AbsolutePathHelpersPublish => _ => _
+        .AppId("absolute_path_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context =>
         {
-            // publish logic here
+            if (context.RunType == RunType.Bump)
+            {
+                DotNetTasks.DotNetNuGetPush(_ => _
+                    .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
+                    .SetApiKey(GithubToken)
+                    .SetTargetPath(OutputDirectory / "**"));
+                DotNetTasks.DotNetNuGetPush(_ => _
+                    .SetSource("https://api.nuget.org/v3/index.json")
+                    .SetApiKey(NuGetAuthToken)
+                    .SetTargetPath(OutputDirectory / "**"));
+            }
         });
+
+    private string? NormalizeReleaseNotes(string? releaseNotes)
+    {
+        return releaseNotes?
+            .Replace(",", "%2C")?
+            .Replace(":", "%3A")?
+            .Replace(";", "%3B");
+    }
 }

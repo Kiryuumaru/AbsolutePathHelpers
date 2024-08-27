@@ -19,12 +19,12 @@
 		<PackageTags>AbsolutePath, Helpers, File, Folder</PackageTags>
 		<PackageProjectUrl>https://github.com/Kiryuumaru/AbsolutePathHelpers</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Kiryuumaru/AbsolutePathHelpers</RepositoryUrl>
-		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="..\LICENSE" Pack="true" PackagePath="" />
+		<None Include="..\LICENSE.txt" Pack="true" PackagePath="" />
 		<None Include="..\README.md" Pack="true" PackagePath="" />
 	</ItemGroup>
 
