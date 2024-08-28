@@ -162,7 +162,7 @@ public static partial class AbsolutePathExtensions
     /// <param name="absolutePath">The absolute path of the file.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the read operation.</param>
     /// <returns>A task that represents the asynchronous read operation. The task result contains the text from the file.</returns>
-    public static Task<string> ReadAllTextAsync(this AbsolutePath absolutePath, CancellationToken cancellationToken = default)
+    public static Task<string> ReadAllText(this AbsolutePath absolutePath, CancellationToken cancellationToken = default)
     {
         return File.ReadAllTextAsync(absolutePath.Path, cancellationToken);
     }
@@ -176,7 +176,7 @@ public static partial class AbsolutePathExtensions
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the read operation.</param>
     /// <returns>A task that represents the asynchronous read operation. The task result contains the deserialized object.</returns>
     [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
-    public static async Task<T?> ReadAsync<T>(this AbsolutePath absolutePath, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
+    public static async Task<T?> Read<T>(this AbsolutePath absolutePath, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
     {
         return JsonSerializer.Deserialize<T>(await File.ReadAllTextAsync(absolutePath.Path, cancellationToken), jsonSerializerOptions);
     }

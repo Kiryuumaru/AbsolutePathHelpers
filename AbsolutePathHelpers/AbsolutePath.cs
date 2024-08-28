@@ -35,7 +35,7 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     /// <summary>
     /// Gets or sets the absolute path.
     /// </summary>
-    public string Path { get; } = path;
+    public string Path { get; } = System.IO.Path.GetFullPath(path);
 
     /// <summary>
     /// Gets the parent directory of the current path.
