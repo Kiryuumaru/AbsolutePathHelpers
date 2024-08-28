@@ -36,6 +36,10 @@
 	  <EmbeddedResource Include="Assets\handle.exe" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="SharpZipLib" Version="1.4.2" />
+	</ItemGroup>
+
 	<PropertyGroup>
 		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
 		<IsTrimmable>true</IsTrimmable>
