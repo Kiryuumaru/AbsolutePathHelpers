@@ -16,7 +16,7 @@ public static partial class AbsolutePathExtensions
     /// <param name="absolutePath">The absolute path to the file.</param>
     /// <param name="content">The content to write to the file.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the write operation.</param>
-    public static async Task WriteAllTextAsync(this AbsolutePath absolutePath, string content, CancellationToken cancellationToken = default)
+    public static async Task WriteAllText(this AbsolutePath absolutePath, string content, CancellationToken cancellationToken = default)
     {
         absolutePath.Parent?.CreateDirectory();
         await File.WriteAllTextAsync(absolutePath.Path, content, cancellationToken);
@@ -31,7 +31,7 @@ public static partial class AbsolutePathExtensions
     /// <param name="jsonSerializerOptions">Options to control the behavior during serialization.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the write operation.</param>
     [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
-    public static async Task WriteAsync<T>(this AbsolutePath absolutePath, T obj, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
+    public static async Task Write<T>(this AbsolutePath absolutePath, T obj, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
     {
         absolutePath.Parent?.CreateDirectory();
         await File.WriteAllTextAsync(absolutePath.Path, JsonSerializer.Serialize(obj, jsonSerializerOptions), cancellationToken);

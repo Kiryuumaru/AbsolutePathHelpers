@@ -4,6 +4,7 @@ using ICSharpCode.SharpZipLib.Tar;
 using ICSharpCode.SharpZipLib.Zip;
 using System.IO;
 using System.IO.Compression;
+using System.Xml.Linq;
 
 namespace AbsolutePathHelpers;
 
@@ -88,8 +89,7 @@ public static partial class AbsolutePathExtensions
 
             void AddFile(AbsolutePath file)
             {
-                string entryName = ZipEntry.CleanName(file.ToString().Replace(directory.ToString(), "", StringComparison.InvariantCultureIgnoreCase));
-                zipArchive.CreateEntryFromFile(file, entryName, compressionLevel);
+                zipArchive.CreateEntryFromFile(file, UnixRelativeName(file, directory), compressionLevel);
             }
 
         }, cancellationToken);
@@ -104,17 +104,16 @@ public static partial class AbsolutePathExtensions
     /// <returns>A task representing the asynchronous operation.</returns>
     public static Task UnZipTo(this AbsolutePath archiveFile, AbsolutePath directory, CancellationToken cancellationToken = default)
     {
-        return Task.Run(() =>
+        return Task.Run(async () =>
         {
-            ICSharpCode.SharpZipLib.Zip.ZipFile zipFile;
-            using FileStream file = File.OpenRead(archiveFile);
-            zipFile = new ICSharpCode.SharpZipLib.Zip.ZipFile(file);
+            using var zipFile = System.IO.Compression.ZipFile.OpenRead(archiveFile);
             try
             {
-                foreach (ZipEntry entry in zipFile.Cast<ZipEntry>().Where(x => !x.IsDirectory))
+
+                foreach (ZipArchiveEntry entry in zipFile.Entries)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    HandleEntry(entry);
+                    await HandleEntry(entry);
                 }
             }
             finally
@@ -125,13 +124,13 @@ public static partial class AbsolutePathExtensions
                 }
             }
 
-            void HandleEntry(ZipEntry entry)
+            async Task HandleEntry(ZipArchiveEntry entry)
             {
-                AbsolutePath absolutePath = directory / entry.Name;
+                AbsolutePath absolutePath = directory / entry.FullName;
                 absolutePath.Parent?.CreateDirectory();
-                using Stream stream = zipFile.GetInputStream(entry);
+                using Stream stream = entry.Open();
                 using FileStream destination = File.Open(absolutePath, FileMode.Create);
-                stream.CopyTo(destination);
+                await stream.CopyToAsync(destination, cancellationToken);
             }
 
         }, cancellationToken);
@@ -236,33 +235,25 @@ public static partial class AbsolutePathExtensions
         return Task.Run(() =>
         {
             archiveFile.Parent?.CreateDirectory();
-            TarArchive tarArchive;
-            string baseDirectoryUnix = baseDirectory.ToString().Replace("\\", "/");
-            using FileStream arg = File.Open(archiveFile, fileMode, FileAccess.ReadWrite);
-            using Stream outputStream = outputStreamFactory(arg);
-            tarArchive = TarArchive.CreateOutputTarArchive(outputStream);
-            try
-            {
-                foreach (var file in files)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    AddFile(file);
-                }
-            }
-            finally
-            {
-                if (tarArchive != null)
-                {
-                    ((IDisposable)tarArchive).Dispose();
-                }
-            }
+
+            using var fileStream = File.Open(archiveFile, fileMode, FileAccess.ReadWrite);
+            using var outputStream = outputStreamFactory(fileStream);
+            using var tarArchive = TarArchive.CreateOutputTarArchive(outputStream);
 
             void AddFile(AbsolutePath file)
             {
-                TarEntry tarEntry = TarEntry.CreateEntryFromFile(file);
-                tarEntry.Name = file.ToString().Replace("\\", "/").Replace(baseDirectoryUnix, "", StringComparison.InvariantCultureIgnoreCase);
-                tarArchive.WriteEntry(tarEntry, recurse: false);
+                var entry = TarEntry.CreateEntryFromFile(file);
+                entry.Name = UnixRelativeName(file, baseDirectory);
+
+                tarArchive.WriteEntry(entry, recurse: false);
             }
+
+            foreach (var file in files)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                AddFile(file);
+            }
+
         }, cancellationToken);
     }
 
@@ -270,11 +261,32 @@ public static partial class AbsolutePathExtensions
     {
         return Task.Run(() =>
         {
-            using FileStream arg = File.OpenRead(archiveFile);
-            using Stream inputStream = inputStreamFactory(arg);
-            using TarArchive tarArchive = TarArchive.CreateInputTarArchive(inputStream, null);
+            using var fileStream = File.OpenRead(archiveFile);
+            using var inputStream = inputStreamFactory(fileStream);
+            using var tarArchive = TarArchive.CreateInputTarArchive(inputStream, nameEncoding: null);
+
             directory.CreateDirectory();
+
             tarArchive.ExtractContents(directory);
+
         }, cancellationToken);
+    }
+
+    private static string UnixRelativeName(AbsolutePath file, AbsolutePath directory)
+    {
+        string relativeName = file.ToString().Replace(directory.ToString(), "", StringComparison.InvariantCultureIgnoreCase);
+
+        if (Path.IsPathRooted(relativeName))
+        {
+            relativeName = relativeName[Path.GetPathRoot(relativeName)!.Length..];
+        }
+        relativeName = relativeName.Replace(@"\", "/");
+
+        while ((relativeName.Length > 0) && (relativeName[0] == '/'))
+        {
+            relativeName = relativeName.Remove(0, 1);
+        }
+
+        return relativeName;
     }
 }
