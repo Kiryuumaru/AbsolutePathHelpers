@@ -160,8 +160,9 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     /// <returns><c>true</c> if the specified <see cref="AbsolutePath"/> is equal to the current <see cref="AbsolutePath"/>; otherwise, <c>false</c>.</returns>
     public bool Equals(AbsolutePath? other)
     {
-        return other is not null &&
-               Path == other.Path;
+        return
+            other is not null &&
+            System.IO.Path.GetFullPath(Path).Equals(System.IO.Path.GetFullPath(other.Path), StringComparison.CurrentCultureIgnoreCase);
     }
 
     /// <summary>

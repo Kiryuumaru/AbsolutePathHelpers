@@ -52,6 +52,18 @@ class Build : BaseNukeBuildHelpers
                 .SetOutputDirectory(OutputDirectory));
         });
 
+    TestEntry AbsolutePathHelpersTest => _ => _
+        .AppId("absolute_path_helpers")
+        .RunnerOS(RunnerOS.Ubuntu2204)
+        .Execute(context =>
+        {
+            var projectPath = RootDirectory / "AbsolutePathHelpers" / "AbsolutePathHelpers.UnitTest.csproj";
+            DotNetTasks.DotNetClean(_ => _
+                .SetProject(projectPath));
+            DotNetTasks.DotNetTest(_ => _
+                .SetProjectFile(projectPath));
+        });
+
     PublishEntry AbsolutePathHelpersPublish => _ => _
         .AppId("absolute_path_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
