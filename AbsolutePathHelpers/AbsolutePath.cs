@@ -9,7 +9,7 @@ namespace AbsolutePathHelpers;
 /// Creates an instance of <see cref="AbsolutePath"/>.
 /// </remarks>
 /// <param name="path">The path to use for the <see cref="AbsolutePath"/>.</param>
-public class AbsolutePath(string path)
+public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
 {
     /// <summary>
     /// Creates a new instance of <see cref="AbsolutePath"/> from the specified path string.
@@ -113,11 +113,63 @@ public class AbsolutePath(string path)
     public static implicit operator DirectoryInfo?(AbsolutePath path) => path.ToDirectoryInfo();
 
     /// <summary>
+    /// Determines whether two <see cref="AbsolutePath"/> instances are equal.
+    /// </summary>
+    /// <param name="left">The left <see cref="AbsolutePath"/> to compare.</param>
+    /// <param name="right">The right <see cref="AbsolutePath"/> to compare.</param>
+    /// <returns><c>true</c> if the specified <see cref="AbsolutePath"/> instances are equal; otherwise, <c>false</c>.</returns>
+    public static bool operator ==(AbsolutePath? left, AbsolutePath? right)
+    {
+        return EqualityComparer<AbsolutePath>.Default.Equals(left, right);
+    }
+
+    /// <summary>
+    /// Determines whether two <see cref="AbsolutePath"/> instances are not equal.
+    /// </summary>
+    /// <param name="left">The left <see cref="AbsolutePath"/> to compare.</param>
+    /// <param name="right">The right <see cref="AbsolutePath"/> to compare.</param>
+    /// <returns><c>true</c> if the specified <see cref="AbsolutePath"/> instances are not equal; otherwise, <c>false</c>.</returns>
+    public static bool operator !=(AbsolutePath? left, AbsolutePath? right)
+    {
+        return !(left == right);
+    }
+
+    /// <summary>
     /// Returns the string representation of the absolute path.
     /// </summary>
     /// <returns>The absolute path as a string.</returns>
     public override string ToString()
     {
         return Path;
+    }
+
+    /// <summary>
+    /// Determines whether the specified object is equal to the current <see cref="AbsolutePath"/>.
+    /// </summary>
+    /// <param name="obj">The object to compare with the current <see cref="AbsolutePath"/>.</param>
+    /// <returns><c>true</c> if the specified object is equal to the current <see cref="AbsolutePath"/>; otherwise, <c>false</c>.</returns>
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as AbsolutePath);
+    }
+
+    /// <summary>
+    /// Determines whether the specified <see cref="AbsolutePath"/> is equal to the current <see cref="AbsolutePath"/>.
+    /// </summary>
+    /// <param name="other">The <see cref="AbsolutePath"/> to compare with the current <see cref="AbsolutePath"/>.</param>
+    /// <returns><c>true</c> if the specified <see cref="AbsolutePath"/> is equal to the current <see cref="AbsolutePath"/>; otherwise, <c>false</c>.</returns>
+    public bool Equals(AbsolutePath? other)
+    {
+        return other is not null &&
+               Path == other.Path;
+    }
+
+    /// <summary>
+    /// Serves as the default hash function.
+    /// </summary>
+    /// <returns>A hash code for the current <see cref="AbsolutePath"/>.</returns>
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Path);
     }
 }
