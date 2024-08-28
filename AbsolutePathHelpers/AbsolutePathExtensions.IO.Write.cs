@@ -92,7 +92,7 @@ public static partial class AbsolutePathExtensions
     /// <param name="targetPath">The target path.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous copy operation.</returns>
-    public static async Task<bool> Copy(this AbsolutePath path, AbsolutePath targetPath, CancellationToken cancellationToken = default)
+    public static async Task<bool> CopyTo(this AbsolutePath path, AbsolutePath targetPath, CancellationToken cancellationToken = default)
     {
         if (path.FileExists())
         {
@@ -159,7 +159,7 @@ public static partial class AbsolutePathExtensions
     /// <param name="targetPath">The target path.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous move operation.</returns>
-    public static async Task<bool> Move(this AbsolutePath path, AbsolutePath targetPath, CancellationToken cancellationToken = default)
+    public static async Task<bool> MoveTo(this AbsolutePath path, AbsolutePath targetPath, CancellationToken cancellationToken = default)
     {
         if (path.FileExists())
         {
