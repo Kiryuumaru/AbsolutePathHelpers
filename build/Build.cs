@@ -57,7 +57,7 @@ class Build : BaseNukeBuildHelpers
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context =>
         {
-            var projectPath = RootDirectory / "AbsolutePathHelpers" / "AbsolutePathHelpers.UnitTest.csproj";
+            var projectPath = RootDirectory / "AbsolutePathHelpers.UnitTest" / "AbsolutePathHelpers.UnitTest.csproj";
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(projectPath));
             DotNetTasks.DotNetTest(_ => _
