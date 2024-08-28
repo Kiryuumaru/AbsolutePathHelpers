@@ -18,10 +18,7 @@ public static partial class AbsolutePathExtensions
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the write operation.</param>
     public static async Task WriteAllTextAsync(this AbsolutePath absolutePath, string content, CancellationToken cancellationToken = default)
     {
-        if (!absolutePath.Parent.DirectoryExists())
-        {
-            absolutePath.Parent.CreateDirectory();
-        }
+        absolutePath.Parent?.CreateDirectory();
         await File.WriteAllTextAsync(absolutePath.Path, content, cancellationToken);
     }
 
@@ -36,10 +33,7 @@ public static partial class AbsolutePathExtensions
     [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
     public static async Task WriteAsync<T>(this AbsolutePath absolutePath, T obj, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
     {
-        if (!absolutePath.Parent.DirectoryExists())
-        {
-            absolutePath.Parent.CreateDirectory();
-        }
+        absolutePath.Parent?.CreateDirectory();
         await File.WriteAllTextAsync(absolutePath.Path, JsonSerializer.Serialize(obj, jsonSerializerOptions), cancellationToken);
     }
 
@@ -50,7 +44,10 @@ public static partial class AbsolutePathExtensions
     /// <returns>A task representing the asynchronous directory creation operation.</returns>
     public static void CreateDirectory(this AbsolutePath absolutePath)
     {
-        Directory.CreateDirectory(absolutePath.Path);
+        if (!absolutePath.DirectoryExists())
+        {
+            Directory.CreateDirectory(absolutePath.Path);
+        }
     }
 
     /// <summary>
@@ -77,7 +74,7 @@ public static partial class AbsolutePathExtensions
     {
         if (createDirectories)
         {
-            absolutePath.Parent.CreateDirectory();
+            absolutePath.Parent?.CreateDirectory();
         }
 
         if (!File.Exists(absolutePath.Path))
@@ -99,7 +96,8 @@ public static partial class AbsolutePathExtensions
     {
         if (path.FileExists())
         {
-            Directory.CreateDirectory(targetPath.Parent);
+            targetPath.Parent?.CreateDirectory();
+
             File.Copy(path.ToString(), targetPath.ToString(), true);
 
             return true;
@@ -117,7 +115,7 @@ public static partial class AbsolutePathExtensions
             foreach (var file in fileMap.Files)
             {
                 AbsolutePath target = file.ToString().Replace(path, targetPath);
-                Directory.CreateDirectory(target.Parent);
+                target.Parent?.CreateDirectory();
                 File.Copy(file, target, true);
             }
             foreach (var (Link, Target) in fileMap.SymbolicLinks)
@@ -134,7 +132,7 @@ public static partial class AbsolutePathExtensions
                 }
 
                 await newLink.Delete(cancellationToken);
-                Directory.CreateDirectory(newLink.Parent);
+                newLink.Parent?.CreateDirectory();
 
                 if (Target.DirectoryExists() || Link.DirectoryExists())
                 {
@@ -165,7 +163,7 @@ public static partial class AbsolutePathExtensions
     {
         if (path.FileExists())
         {
-            Directory.CreateDirectory(targetPath.Parent);
+            targetPath.Parent?.CreateDirectory();
             File.Move(path.ToString(), targetPath.ToString(), true);
 
             return true;
@@ -183,7 +181,7 @@ public static partial class AbsolutePathExtensions
             foreach (var file in fileMap.Files)
             {
                 AbsolutePath target = file.ToString().Replace(path, targetPath);
-                Directory.CreateDirectory(target.Parent);
+                target.Parent?.CreateDirectory();
                 File.Move(file, target, true);
             }
             foreach (var (Link, Target) in fileMap.SymbolicLinks)
@@ -200,7 +198,7 @@ public static partial class AbsolutePathExtensions
                 }
 
                 await newLink.Delete(cancellationToken);
-                Directory.CreateDirectory(newLink.Parent);
+                newLink.Parent?.CreateDirectory();
 
                 if (Target.DirectoryExists() || Link.DirectoryExists())
                 {

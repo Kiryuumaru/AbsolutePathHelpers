@@ -266,7 +266,7 @@ public static partial class AbsolutePathExtensions
                         string linkTarget;
                         if (!Path.IsPathRooted(fileInfo.LinkTarget))
                         {
-                            linkTarget = item.Parent / fileInfo.LinkTarget;
+                            linkTarget = item.Parent! / fileInfo.LinkTarget;
                         }
                         else
                         {
@@ -291,7 +291,7 @@ public static partial class AbsolutePathExtensions
                         string linkTarget;
                         if (!Path.IsPathRooted(directoryInfo.LinkTarget))
                         {
-                            linkTarget = item.Parent / directoryInfo.LinkTarget;
+                            linkTarget = item.Parent! / directoryInfo.LinkTarget;
                         }
                         else
                         {

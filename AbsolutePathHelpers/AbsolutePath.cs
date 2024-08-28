@@ -5,7 +5,11 @@ namespace AbsolutePathHelpers;
 /// <summary>
 /// Represents an absolute file or directory path.
 /// </summary>
-public class AbsolutePath
+/// <remarks>
+/// Creates an instance of <see cref="AbsolutePath"/>.
+/// </remarks>
+/// <param name="path">The path to use for the <see cref="AbsolutePath"/>.</param>
+public class AbsolutePath(string path)
 {
     /// <summary>
     /// Creates a new instance of <see cref="AbsolutePath"/> from the specified path string.
@@ -31,43 +35,46 @@ public class AbsolutePath
     /// <summary>
     /// Gets or sets the absolute path.
     /// </summary>
-    public string Path { get; }
+    public string Path { get; } = path;
 
     /// <summary>
     /// Gets the parent directory of the current path.
     /// </summary>
     [JsonIgnore]
-    public AbsolutePath Parent { get; }
+    public AbsolutePath? Parent
+    {
+        get
+        {
+            var parentDir = Directory.GetParent(Path);
+            return parentDir == null ? null : Create(parentDir.ToString());
+        }
+    }
 
     /// <summary>
     /// Gets the file name without extension of the current path.
     /// </summary>
     [JsonIgnore]
-    public string Stem { get; }
+    public string Stem
+    {
+        get => System.IO.Path.GetFileNameWithoutExtension(Path);
+    }
 
     /// <summary>
     /// Gets the file name of the current path.
     /// </summary>
     [JsonIgnore]
-    public string Name { get; }
+    public string Name
+    {
+        get => System.IO.Path.GetFileName(Path);
+    }
 
     /// <summary>
     /// Gets the file extension of the current path.
     /// </summary>
     [JsonIgnore]
-    public string Extension { get; }
-
-    /// <summary>
-    /// Creates an instance of <see cref="AbsolutePath"/>.
-    /// </summary>
-    /// <param name="path">The path to use for the <see cref="AbsolutePath"/>.</param>
-    public AbsolutePath(string path)
+    public string Extension
     {
-        Path = path;
-        Parent = Create(Directory.GetParent(Path)!.ToString());
-        Stem = System.IO.Path.GetFileNameWithoutExtension(Path);
-        Name = System.IO.Path.GetFileName(Path);
-        Extension = System.IO.Path.GetExtension(Path);
+        get => System.IO.Path.GetExtension(Path);
     }
 
     /// <summary>
