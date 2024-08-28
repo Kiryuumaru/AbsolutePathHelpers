@@ -54,7 +54,6 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry AbsolutePathHelpersTest => _ => _
         .AppId("absolute_path_helpers")
-        .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context =>
         {
             var projectPath = RootDirectory / "AbsolutePathHelpers.UnitTest" / "AbsolutePathHelpers.UnitTest.csproj";
@@ -62,7 +61,11 @@ class Build : BaseNukeBuildHelpers
                 .SetProject(projectPath));
             DotNetTasks.DotNetTest(_ => _
                 .SetProjectFile(projectPath));
-        });
+        })
+        .Matrix([ new { Id = "LINUX", RunnerOS = RunnerOS.Ubuntu2204 }, new { Id = "WINDOWS", RunnerOS = RunnerOS.Windows2022 }],
+            (_, osMatrix) => _
+                .RunnerOS(osMatrix.RunnerOS)
+                .WorkflowId($"TEST_{osMatrix.Id}"));
 
     PublishEntry AbsolutePathHelpersPublish => _ => _
         .AppId("absolute_path_helpers")
