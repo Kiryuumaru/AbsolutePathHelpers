@@ -53,16 +53,4 @@ public class UnitTest1
         Assert.Equal("test3", await testFile3.ReadAllText());
         Assert.Equal("test4", await testFile4.ReadAllText());
     }
-
-    [Fact]
-    public async void Test2()
-    {
-        AbsolutePath path1 = "C:\\ManagedCICDRunner";
-
-        await Task.Delay(1000);
-
-        var ss1 = await path1.GetProcesses();
-
-        int ss = 1;
-    }
 }
