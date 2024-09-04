@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -12,13 +13,17 @@ public static partial class AbsolutePathExtensions
     /// Gets a list of processes that are currently locking the specified file or any file within the specified directory.
     /// </summary>
     /// <param name="path">The path to the file or directory to check for locked files.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation that returns a list of processes locking the file(s).</returns>
-    public static async Task<Process[]> GetProcesses(this AbsolutePath path)
+    public static async Task<Process[]> GetProcesses(this AbsolutePath path, CancellationToken cancellationToken = default)
     {
-        List<Process> processes = [];
+        ConcurrentDictionary<int, Process> processMap = [];
         if (path.FileExists())
         {
-            processes.AddRange(await WhoIsLocking(path));
+            foreach (var proc in await WhoIsLocking(path, cancellationToken))
+            {
+                processMap.TryAdd(proc.Id, proc);
+            }
         }
         else if (path.DirectoryExists())
         {
@@ -28,32 +33,31 @@ public static partial class AbsolutePathExtensions
             pathsToCheck.AddRange(fileMap.Files);
             pathsToCheck.AddRange(fileMap.Folders);
 
-            Dictionary<int, Process> processMap = [];
+            List<Task> tasks = new List<Task>();
             foreach (var pathToCheck in pathsToCheck)
             {
-                foreach (var proc in await WhoIsLocking(pathToCheck))
+                tasks.Add(Task.Run(async () =>
                 {
-                    var id = proc.Id;
-                    if (!processMap.ContainsKey(id))
+                    foreach (var proc in await WhoIsLocking(pathToCheck, cancellationToken))
                     {
-                        processMap[id] = proc;
-                        processes.Add(proc);
+                        processMap.TryAdd(proc.Id, proc);
                     }
-                }
+                }));
             }
+            await Task.WhenAll(tasks);
         }
-        return [.. processes];
+        return [.. processMap.Values];
     }
 
-    private static async Task<List<Process>> WhoIsLocking(string path)
+    private static async Task<List<Process>> WhoIsLocking(string path, CancellationToken cancellationToken)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            return await WhoIsLockingWindows(path);
+            return await WhoIsLockingWindows(path, cancellationToken);
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            return await WhoIsLockingLinux(path);
+            return await WhoIsLockingLinux(path, cancellationToken);
         }
 
         throw new NotSupportedException(RuntimeInformation.OSDescription);
@@ -66,10 +70,10 @@ public static partial class AbsolutePathExtensions
     /// </summary>
 
     // https://learn.microsoft.com/en-us/sysinternals/downloads/handle
-    private const string _HandleExeEmbeddedPath = "Application.Assets.handle.exe";
+    private const string _HandleExeEmbeddedPath = "AbsolutePathHelpers.Assets.handle.exe";
     private const string _HandleExeSHA256 = "84c22579ca09f4fd8a8d9f56a6348c4ad2a92d4722c9f1213dd73c2f68a381e3";
 
-    private static async Task<List<Process>> WhoIsLockingWindows(string path)
+    private static async Task<List<Process>> WhoIsLockingWindows(string path, CancellationToken cancellationToken)
     {
         AbsolutePath handlePath = Path.GetTempPath();
         handlePath /= "sysinternals";
@@ -129,7 +133,7 @@ public static partial class AbsolutePathExtensions
     /// Not sure if works, not tested
     /// </summary>
 
-    private static async Task<List<Process>> WhoIsLockingLinux(string path)
+    private static async Task<List<Process>> WhoIsLockingLinux(string path, CancellationToken cancellationToken)
     {
         var processes = new List<Process>();
 
