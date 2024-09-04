@@ -14,7 +14,7 @@ public class UnitTest1
     }
 
     [Fact]
-    public async void CompressionTest()
+    public async Task CompressionTest()
     {
         var testDir = AbsolutePath.Create(Environment.CurrentDirectory) / "bin" / "compression-test";
 
