@@ -13,7 +13,7 @@ public static partial class AbsolutePathExtensions
     /// <returns>A task that represents the asynchronous operation. The task result contains the computed hash as a hexadecimal string.</returns>
     public static async Task<string> GetHash(this AbsolutePath absolutePath, HashAlgorithm hashAlgorithm, CancellationToken cancellationToken = default)
     {
-        using var stream = File.OpenRead(absolutePath.Path);
+        using var stream = new FileStream(absolutePath.Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         byte[] hashBytes = await hashAlgorithm.ComputeHashAsync(stream, cancellationToken);
         return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
     }
