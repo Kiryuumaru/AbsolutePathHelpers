@@ -95,8 +95,8 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: absolute_path_helpers___ABSOLUTEPATHHELPERSBUILD
-        path: ./.nuke/temp/artifacts/*
+        name: build___absolute_path_helpers___ABSOLUTEPATHHELPERSBUILD
+        path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -180,7 +180,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
-        pattern: absolute_path_helpers___*
+        pattern: build___absolute_path_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -192,6 +192,13 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke PipelineRunEntry
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_RUN_SCRIPT }} PipelineRunEntry --args "run=publish;idsToRun=AbsolutePathHelpersPublish"
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: publish___absolute_path_helpers___ABSOLUTEPATHHELPERSPUBLISH
+        path: ./.nuke/temp/artifacts-upload/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - ABSOLUTEPATHHELPERSBUILD
@@ -215,6 +222,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
+        pattern: publish___*
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
