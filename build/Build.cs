@@ -24,7 +24,6 @@ class Build : BaseNukeBuildHelpers
     BuildEntry AbsolutePathHelpersBuild => _ => _
         .AppId("absolute_path_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
-        .CommonReleaseAsset(OutputDirectory)
         .Execute(context =>
         {
             var projectPath = RootDirectory / "AbsolutePathHelpers" / "AbsolutePathHelpers.csproj";
@@ -70,6 +69,7 @@ class Build : BaseNukeBuildHelpers
     PublishEntry AbsolutePathHelpersPublish => _ => _
         .AppId("absolute_path_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
+        .ReleaseCommonAsset(OutputDirectory)
         .Execute(context =>
         {
             if (context.RunType == RunType.Bump)
