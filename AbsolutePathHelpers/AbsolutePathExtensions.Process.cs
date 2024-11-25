@@ -52,7 +52,7 @@ public static partial class AbsolutePathExtensions
         {
             using var stream = Assembly.GetAssembly(typeof(AbsolutePath))!.GetManifestResourceStream(_HandleExeEmbeddedPath)!;
             byte[] bytes = new byte[(int)stream.Length];
-            stream.Read(bytes, 0, bytes.Length);
+            var _ = await stream.ReadAsync(bytes, cancellationToken);
             handlePath.Parent?.CreateDirectory();
             File.WriteAllBytes(handlePath, bytes);
         }
