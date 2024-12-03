@@ -88,8 +88,8 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSBUILD_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSBUILD_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Run Nuke PipelineRunEntry
-      run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSBUILD_RUN_SCRIPT }} PipelineRunEntry --args "run=build;idsToRun=AbsolutePathHelpersBuild"
+      name: Rune Nuke AbsolutePathHelpersBuild
+      run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSBUILD_RUN_SCRIPT }} Run --args "AbsolutePathHelpersBuild"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -125,8 +125,8 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_LINUX_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_LINUX_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Run Nuke PipelineRunEntry
-      run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_LINUX_RUN_SCRIPT }} PipelineRunEntry --args "run=test;idsToRun=TEST_LINUX"
+      name: Rune Nuke TEST_LINUX
+      run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_LINUX_RUN_SCRIPT }} Run --args "TEST_LINUX"
     needs:
     - PRE_SETUP
     - ABSOLUTEPATHHELPERSBUILD
@@ -156,8 +156,8 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_WINDOWS_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_WINDOWS_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Run Nuke PipelineRunEntry
-      run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_WINDOWS_RUN_SCRIPT }} PipelineRunEntry --args "run=test;idsToRun=TEST_WINDOWS"
+      name: Rune Nuke TEST_WINDOWS
+      run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_WINDOWS_RUN_SCRIPT }} Run --args "TEST_WINDOWS"
     needs:
     - PRE_SETUP
     - ABSOLUTEPATHHELPERSBUILD
@@ -188,8 +188,8 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Run Nuke PipelineRunEntry
-      run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_RUN_SCRIPT }} PipelineRunEntry --args "run=publish;idsToRun=AbsolutePathHelpersPublish"
+      name: Rune Nuke AbsolutePathHelpersPublish
+      run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_RUN_SCRIPT }} Run --args "AbsolutePathHelpersPublish"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
