@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 #if NETSTANDARD
 #elif NET5_0_OR_GREATER
@@ -38,6 +39,20 @@ public static partial class AbsolutePathExtensions
     {
         absolutePath.Parent?.CreateDirectory();
         await File.WriteAllTextAsync(absolutePath.Path, JsonSerializer.Serialize(obj, jsonSerializerOptions), cancellationToken);
+    }
+
+    /// <summary>
+    /// Asynchronously writes the specified object as JSON to the file at the given <see cref="AbsolutePath"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to write.</typeparam>
+    /// <param name="absolutePath">The absolute path to the file.</param>
+    /// <param name="obj">The object to write as JSON.</param>
+    /// <param name="jsonTypeInfo">Metadata about the type to convert.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the write operation.</param>
+    public static async Task Write<T>(this AbsolutePath absolutePath, T obj, JsonTypeInfo<T> jsonTypeInfo, CancellationToken cancellationToken = default)
+    {
+        absolutePath.Parent?.CreateDirectory();
+        await File.WriteAllTextAsync(absolutePath.Path, JsonSerializer.Serialize(obj, jsonTypeInfo), cancellationToken);
     }
 
     /// <summary>
