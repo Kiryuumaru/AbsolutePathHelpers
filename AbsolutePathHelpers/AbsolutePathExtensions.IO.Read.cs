@@ -175,6 +175,9 @@ public static partial class AbsolutePathExtensions
     /// <param name="jsonSerializerOptions">Options to control the behavior during deserialization.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the read operation.</param>
     /// <returns>A task that represents the asynchronous read operation. The task result contains the deserialized object.</returns>
+#if NET7_0_OR_GREATER
+    [RequiresDynamicCode(RequiresDynamicCode)]
+#endif
     [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
     public static async Task<T?> Read<T>(this AbsolutePath absolutePath, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
     {
