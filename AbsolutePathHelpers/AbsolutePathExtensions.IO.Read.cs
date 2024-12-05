@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
+
 
 #if NETSTANDARD
 #elif NET5_0_OR_GREATER
@@ -182,6 +184,19 @@ public static partial class AbsolutePathExtensions
     public static async Task<T?> Read<T>(this AbsolutePath absolutePath, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
     {
         return JsonSerializer.Deserialize<T>(await File.ReadAllTextAsync(absolutePath.Path, cancellationToken), jsonSerializerOptions);
+    }
+
+    /// <summary>
+    /// Reads and deserializes a JSON file at the specified <see cref="AbsolutePath"/> into an object of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to deserialize to.</typeparam>
+    /// <param name="absolutePath">The absolute path of the file.</param>
+    /// <param name="jsonTypeInfo">Metadata about the type to convert.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the read operation.</param>
+    /// <returns>A task that represents the asynchronous read operation. The task result contains the deserialized object.</returns>
+    public static async Task<T?> Read<T>(this AbsolutePath absolutePath, JsonTypeInfo<T> jsonTypeInfo, CancellationToken cancellationToken = default)
+    {
+        return JsonSerializer.Deserialize(await File.ReadAllTextAsync(absolutePath.Path, cancellationToken), jsonTypeInfo);
     }
 
     /// <summary>
