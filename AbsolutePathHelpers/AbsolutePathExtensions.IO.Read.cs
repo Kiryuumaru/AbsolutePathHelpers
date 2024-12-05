@@ -2,7 +2,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
-
 #if NETSTANDARD
 #elif NET5_0_OR_GREATER
 using static AbsolutePathHelpers.Common.Internals.Message;
