@@ -30,6 +30,9 @@ public static partial class AbsolutePathExtensions
     /// <param name="obj">The object to write as JSON.</param>
     /// <param name="jsonSerializerOptions">Options to control the behavior during serialization.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the write operation.</param>
+#if NET7_0_OR_GREATER
+    [RequiresDynamicCode(RequiresDynamicCode)]
+#endif
     [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
     public static async Task Write<T>(this AbsolutePath absolutePath, T obj, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
     {
