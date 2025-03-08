@@ -16,7 +16,7 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     /// </summary>
     /// <param name="path">The path to use for the <see cref="AbsolutePath"/>.</param>
     /// <returns>A new instance of <see cref="AbsolutePath"/>.</returns>
-    /// <exception cref="ArgumentException">Thrown when the path is null, empty, or not an absolute path.</exception>
+    /// <exception cref="ArgumentException">Thrown when the path is null or empty.</exception>
     public static AbsolutePath Create(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -24,12 +24,9 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
             throw new ArgumentException("Path cannot be null or empty", nameof(path));
         }
 
-        if (!System.IO.Path.IsPathRooted(path))
-        {
-            throw new ArgumentException("Path must be an absolute path", nameof(path));
-        }
-
-        return new AbsolutePath(path);
+        return new AbsolutePath(System.IO.Path.IsPathRooted(path)
+            ? System.IO.Path.GetFullPath(path)
+            : System.IO.Path.GetFullPath(System.IO.Path.Combine(Directory.GetCurrentDirectory(), path)));
     }
 
     /// <summary>
