@@ -86,10 +86,32 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     }
 
     /// <summary>
+    /// Combines the current <see cref="AbsolutePath"/> with a relative path.
+    /// </summary>
+    /// <param name="b">The base <see cref="AbsolutePath"/>.</param>
+    /// <param name="c">The relative path to combine with.</param>
+    /// <returns>A new <see cref="AbsolutePath"/> representing the combined path.</returns>
+    public static AbsolutePath operator /(AbsolutePath b, IEnumerable<string> c)
+    {
+        AbsolutePath path = b;
+        foreach (var item in c)
+        {
+            path = new AbsolutePath(System.IO.Path.Combine(path.Path, item));
+        }
+        return path;
+    }
+
+    /// <summary>
     /// Implicitly converts a string to an <see cref="AbsolutePath"/>.
     /// </summary>
     /// <param name="path">The string path to convert.</param>
     public static implicit operator AbsolutePath(string path) => new(path);
+
+    /// <summary>
+    /// Implicitly converts a string to an <see cref="AbsolutePath"/>.
+    /// </summary>
+    /// <param name="path">The string path to convert.</param>
+    public static implicit operator AbsolutePath(string[] path) => new(System.IO.Path.Combine(path));
 
     /// <summary>
     /// Implicitly converts an <see cref="AbsolutePath"/> to a string.
