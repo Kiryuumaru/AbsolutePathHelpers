@@ -12,11 +12,18 @@ namespace AbsolutePathHelpers;
 public static partial class AbsolutePathExtensions
 {
     /// <summary>
-    /// Asynchronously writes the specified text to the file at the given <see cref="AbsolutePath"/>.
+    /// Asynchronously writes text content to a file at the specified path, creating the file if it doesn't exist.
     /// </summary>
-    /// <param name="absolutePath">The absolute path to the file.</param>
-    /// <param name="content">The content to write to the file.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the write operation.</param>
+    /// <param name="absolutePath">The absolute path to the file to write to.</param>
+    /// <param name="content">The text content to write to the file.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous write operation.</returns>
+    /// <exception cref="IOException">The file is being used by another process, or an I/O error occurred.</exception>
+    /// <exception cref="UnauthorizedAccessException">The caller doesn't have the required permission.</exception>
+    /// <remarks>
+    /// If the target file already exists, it will be overwritten. The parent directory will be created 
+    /// automatically if it doesn't exist.
+    /// </remarks>
     public static async Task WriteAllText(this AbsolutePath absolutePath, string content, CancellationToken cancellationToken = default)
     {
         absolutePath.Parent?.CreateDirectory();
@@ -24,42 +31,15 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Asynchronously writes the specified object as JSON to the file at the given <see cref="AbsolutePath"/>.
+    /// Creates a directory at the specified path if it doesn't already exist.
     /// </summary>
-    /// <typeparam name="T">The type of the object to write.</typeparam>
-    /// <param name="absolutePath">The absolute path to the file.</param>
-    /// <param name="obj">The object to write as JSON.</param>
-    /// <param name="jsonSerializerOptions">Options to control the behavior during serialization.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the write operation.</param>
-#if NET7_0_OR_GREATER
-    [RequiresDynamicCode(RequiresDynamicCode)]
-#endif
-    [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
-    public static async Task Write<T>(this AbsolutePath absolutePath, T obj, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
-    {
-        absolutePath.Parent?.CreateDirectory();
-        await File.WriteAllTextAsync(absolutePath.Path, JsonSerializer.Serialize(obj, jsonSerializerOptions), cancellationToken);
-    }
-
-    /// <summary>
-    /// Asynchronously writes the specified object as JSON to the file at the given <see cref="AbsolutePath"/>.
-    /// </summary>
-    /// <typeparam name="T">The type of the object to write.</typeparam>
-    /// <param name="absolutePath">The absolute path to the file.</param>
-    /// <param name="obj">The object to write as JSON.</param>
-    /// <param name="jsonTypeInfo">Metadata about the type to convert.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the write operation.</param>
-    public static async Task Write<T>(this AbsolutePath absolutePath, T obj, JsonTypeInfo<T> jsonTypeInfo, CancellationToken cancellationToken = default)
-    {
-        absolutePath.Parent?.CreateDirectory();
-        await File.WriteAllTextAsync(absolutePath.Path, JsonSerializer.Serialize(obj, jsonTypeInfo), cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates a directory at the specified <see cref="AbsolutePath"/>.
-    /// </summary>
-    /// <param name="absolutePath">The absolute path to the directory.</param>
-    /// <returns>A task representing the asynchronous directory creation operation.</returns>
+    /// <param name="absolutePath">The absolute path where the directory should be created.</param>
+    /// <exception cref="IOException">The directory cannot be created.</exception>
+    /// <exception cref="UnauthorizedAccessException">The caller doesn't have the required permission.</exception>
+    /// <remarks>
+    /// This method does nothing if the directory already exists. All parent directories will also
+    /// be created if they don't exist.
+    /// </remarks>
     public static void CreateDirectory(this AbsolutePath absolutePath)
     {
         if (!absolutePath.DirectoryExists())
@@ -69,11 +49,17 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Creates a directory at the specified <see cref="AbsolutePath"/>, or cleans the existing directory if it already exists.
+    /// Creates a directory at the specified path, or empties it if it already exists.
     /// </summary>
-    /// <param name="absolutePath">The absolute path to the directory.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A task representing the asynchronous directory creation or cleaning operation.</returns>
+    /// <param name="absolutePath">The absolute path where the directory should be created or cleaned.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="IOException">The directory cannot be created or cleaned.</exception>
+    /// <exception cref="UnauthorizedAccessException">The caller doesn't have the required permission.</exception>
+    /// <remarks>
+    /// If the directory already exists, all its contents (files, subdirectories, and symbolic links) will be deleted
+    /// before returning. This ensures you have an empty directory to work with.
+    /// </remarks>
     public static async Task CreateOrCleanDirectory(this AbsolutePath absolutePath, CancellationToken cancellationToken = default)
     {
         await Delete(absolutePath, cancellationToken);
@@ -81,13 +67,19 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Creates a file at the specified <see cref="AbsolutePath"/> or updates its last write time.
+    /// Creates an empty file or updates the timestamp of an existing file (similar to the Unix "touch" command).
     /// </summary>
-    /// <param name="absolutePath">The absolute path to the file.</param>
-    /// <param name="time">The time to set as the last write time. If null, the current time is used.</param>
-    /// <param name="createDirectories">Whether to create parent directories if they do not exist.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A task representing the asynchronous touch file operation.</returns>
+    /// <param name="absolutePath">The absolute path to the file to create or update.</param>
+    /// <param name="time">The timestamp to set on the file. If null, the current system time is used.</param>
+    /// <param name="createDirectories">If true, ensures parent directories exist; otherwise, may fail if they don't.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="IOException">An I/O error occurred while creating or updating the file.</exception>
+    /// <exception cref="UnauthorizedAccessException">The caller doesn't have the required permission.</exception>
+    /// <remarks>
+    /// If the file doesn't exist, an empty file will be created. If the file already exists, only its
+    /// last write time will be updated, preserving the file's content.
+    /// </remarks>
     public static async Task TouchFile(this AbsolutePath absolutePath, DateTime? time = null, bool createDirectories = true, CancellationToken cancellationToken = default)
     {
         if (createDirectories)
@@ -104,12 +96,23 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Recursively copies all files and directories from the specified path to the target path.
+    /// Recursively copies a file or directory (including all contents) to a target location.
     /// </summary>
-    /// <param name="path">The source path.</param>
-    /// <param name="targetPath">The target path.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A task representing the asynchronous copy operation.</returns>
+    /// <param name="path">The source path (file or directory) to copy from.</param>
+    /// <param name="targetPath">The target path to copy to.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous operation. The result is true if the copy was successful, false if the source doesn't exist.</returns>
+    /// <exception cref="IOException">An I/O error occurred during the copy operation.</exception>
+    /// <exception cref="UnauthorizedAccessException">The caller doesn't have the required permission.</exception>
+    /// <remarks>
+    /// When copying a file, the parent directory of the target will be created if it doesn't exist.
+    /// When copying a directory, all subdirectories, files, and symbolic links will be copied.
+    /// If the target already exists, it will be overwritten.
+    /// 
+    /// Symbolic links will be recreated as symbolic links at the target location, preserving their targets.
+    /// If a symbolic link points to a location within the source directory, its target will be adjusted
+    /// to point to the corresponding location in the target directory.
+    /// </remarks>
     public static async Task<bool> CopyTo(this AbsolutePath path, AbsolutePath targetPath, CancellationToken cancellationToken = default)
     {
         if (path.FileExists())
@@ -171,12 +174,24 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Recursively moves all files and directories from the specified path to the target path.
+    /// Recursively moves a file or directory (including all contents) to a target location.
     /// </summary>
-    /// <param name="path">The source path.</param>
-    /// <param name="targetPath">The target path.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A task representing the asynchronous move operation.</returns>
+    /// <param name="path">The source path (file or directory) to move from.</param>
+    /// <param name="targetPath">The target path to move to.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous operation. The result is true if the move was successful, false if the source doesn't exist.</returns>
+    /// <exception cref="IOException">An I/O error occurred during the move operation.</exception>
+    /// <exception cref="UnauthorizedAccessException">The caller doesn't have the required permission.</exception>
+    /// <remarks>
+    /// When moving a file, the parent directory of the target will be created if it doesn't exist.
+    /// When moving a directory, all subdirectories, files, and symbolic links will be moved.
+    /// If the target already exists, it will be overwritten.
+    /// 
+    /// This operation first copies everything to the target location and then deletes the source.
+    /// Symbolic links will be recreated as symbolic links at the target location, preserving their targets.
+    /// If a symbolic link points to a location within the source directory, its target will be adjusted
+    /// to point to the corresponding location in the target directory.
+    /// </remarks>
     public static async Task<bool> MoveTo(this AbsolutePath path, AbsolutePath targetPath, CancellationToken cancellationToken = default)
     {
         if (path.FileExists())
@@ -239,11 +254,20 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Recursively deletes all files and directories from the specified path.
+    /// Recursively deletes a file or directory (including all contents).
     /// </summary>
-    /// <param name="path">The source path to delete.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A task representing the asynchronous move operation.</returns>
+    /// <param name="path">The path (file or directory) to delete.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous operation. The result is true if the deletion was successful, false if the path doesn't exist.</returns>
+    /// <exception cref="IOException">An I/O error occurred during the deletion, such as the file being locked.</exception>
+    /// <exception cref="UnauthorizedAccessException">The caller doesn't have the required permission.</exception>
+    /// <remarks>
+    /// When deleting a directory, all contained files, subdirectories, and symbolic links will be deleted.
+    /// This method is safe to call on paths that don't exist - it will simply return false.
+    /// 
+    /// Note that this operation runs on a background thread via Task.Run to avoid blocking the calling thread
+    /// during potentially long-running deletion operations.
+    /// </remarks>
     public static Task<bool> Delete(this AbsolutePath path, CancellationToken cancellationToken = default)
     {
         return Task.Run(() =>

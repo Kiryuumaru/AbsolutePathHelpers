@@ -12,18 +12,20 @@ namespace AbsolutePathHelpers;
 public static partial class AbsolutePathExtensions
 {
     /// <summary>
-    /// Provides extension methods for the <see cref="AbsolutePath"/> class.
+    /// Converts the <see cref="AbsolutePath"/> to a <see cref="FileInfo"/> object.
     /// </summary>
+    /// <param name="absolutePath">The absolute path to convert.</param>
+    /// <returns>A <see cref="FileInfo"/> object representing the file, or null if the path is null.</returns>
     public static FileInfo? ToFileInfo(this AbsolutePath absolutePath)
     {
         return absolutePath.Path is not null ? new FileInfo(absolutePath.Path) : null;
     }
 
     /// <summary>
-    /// Converts the <see cref="AbsolutePath"/> to a <see cref="FileInfo"/> object.
+    /// Converts the <see cref="AbsolutePath"/> to a <see cref="DirectoryInfo"/> object.
     /// </summary>
     /// <param name="absolutePath">The absolute path to convert.</param>
-    /// <returns>A <see cref="FileInfo"/> object representing the file, or null if the path is null.</returns>
+    /// <returns>A <see cref="DirectoryInfo"/> object representing the directory, or null if the path is null.</returns>
     public static DirectoryInfo? ToDirectoryInfo(this AbsolutePath absolutePath)
     {
         return absolutePath.Path is not null ? new DirectoryInfo(absolutePath.Path) : null;
@@ -32,65 +34,68 @@ public static partial class AbsolutePathExtensions
     /// <summary>
     /// Checks if the path specified by the <see cref="AbsolutePath"/> exists as either a file or directory.
     /// </summary>
-    /// <param name="absolutePath">The absolute path to check.</param>
-    /// <returns>True if the path exists, otherwise false.</returns>
+    /// <param name="absolutePath">The absolute path to check for existence.</param>
+    /// <returns><c>true</c> if the path exists as either a file or directory; otherwise, <c>false</c>.</returns>
     public static bool IsExists(this AbsolutePath absolutePath)
     {
         return Directory.Exists(absolutePath.Path) || File.Exists(absolutePath.Path);
     }
 
     /// <summary>
-    /// Checks if the file specified by the <see cref="AbsolutePath"/> exists.
+    /// Checks if the path specified by the <see cref="AbsolutePath"/> exists as a file.
     /// </summary>
-    /// <param name="absolutePath">The absolute path to check.</param>
-    /// <returns>True if the file exists, otherwise false.</returns>
+    /// <param name="absolutePath">The absolute path to check for file existence.</param>
+    /// <returns><c>true</c> if the path exists as a file; otherwise, <c>false</c>.</returns>
     public static bool FileExists(this AbsolutePath absolutePath)
     {
         return File.Exists(absolutePath.Path);
     }
 
     /// <summary>
-    /// Checks if the directory specified by the <see cref="AbsolutePath"/> exists.
+    /// Checks if the path specified by the <see cref="AbsolutePath"/> exists as a directory.
     /// </summary>
-    /// <param name="absolutePath">The absolute path to check.</param>
-    /// <returns>True if the directory exists, otherwise false.</returns>
+    /// <param name="absolutePath">The absolute path to check for directory existence.</param>
+    /// <returns><c>true</c> if the path exists as a directory; otherwise, <c>false</c>.</returns>
     public static bool DirectoryExists(this AbsolutePath absolutePath)
     {
         return Directory.Exists(absolutePath.Path);
     }
 
     /// <summary>
-    /// Checks if the directory specified by the <see cref="AbsolutePath"/> contains any files matching the specified pattern.
+    /// Determines whether the directory specified by the <see cref="AbsolutePath"/> contains any files matching the specified pattern.
     /// </summary>
-    /// <param name="absolutePath">The absolute path of the directory.</param>
-    /// <param name="pattern">The search string to match against the names of files.</param>
-    /// <param name="options">Specifies whether the search operation should include only the current directory or all subdirectories.</param>
-    /// <returns>True if the directory contains files matching the pattern, otherwise false.</returns>
+    /// <param name="absolutePath">The absolute path of the directory to search in.</param>
+    /// <param name="pattern">The search pattern to match against file names (e.g., "*.txt").</param>
+    /// <param name="options">Specifies whether to search only the current directory or include all subdirectories.</param>
+    /// <returns><c>true</c> if the directory contains at least one file matching the pattern; otherwise, <c>false</c>.</returns>
+    /// <remarks>Returns <c>false</c> if the directory does not exist.</remarks>
     public static bool ContainsFile(this AbsolutePath absolutePath, string pattern, SearchOption options = SearchOption.TopDirectoryOnly)
     {
         return ToDirectoryInfo(absolutePath)?.GetFiles(pattern, options).Length != 0;
     }
 
     /// <summary>
-    /// Checks if the directory specified by the <see cref="AbsolutePath"/> contains any directories matching the specified pattern.
+    /// Determines whether the directory specified by the <see cref="AbsolutePath"/> contains any subdirectories matching the specified pattern.
     /// </summary>
-    /// <param name="absolutePath">The absolute path of the directory.</param>
-    /// <param name="pattern">The search string to match against the names of directories.</param>
-    /// <param name="options">Specifies whether the search operation should include only the current directory or all subdirectories.</param>
-    /// <returns>True if the directory contains directories matching the pattern, otherwise false.</returns>
+    /// <param name="absolutePath">The absolute path of the directory to search in.</param>
+    /// <param name="pattern">The search pattern to match against directory names (e.g., "bin*").</param>
+    /// <param name="options">Specifies whether to search only the current directory or include all subdirectories.</param>
+    /// <returns><c>true</c> if the directory contains at least one subdirectory matching the pattern; otherwise, <c>false</c>.</returns>
+    /// <remarks>Returns <c>false</c> if the directory does not exist.</remarks>
     public static bool ContainsDirectory(this AbsolutePath absolutePath, string pattern, SearchOption options = SearchOption.TopDirectoryOnly)
     {
         return ToDirectoryInfo(absolutePath)?.GetDirectories(pattern, options).Length != 0;
     }
 
     /// <summary>
-    /// Retrieves the files within the directory specified by the <see cref="AbsolutePath"/> that match the specified pattern.
+    /// Retrieves all files within the directory specified by the <see cref="AbsolutePath"/> that match the given criteria.
     /// </summary>
-    /// <param name="absolutePath">The absolute path of the directory.</param>
-    /// <param name="pattern">The search string to match against the names of files. Default is "*".</param>
-    /// <param name="depth">The depth to search. Default is 1.</param>
-    /// <param name="attributes">The file attributes to match against. Default is 0 (no specific attributes).</param>
-    /// <returns>An enumerable collection of <see cref="AbsolutePath"/> objects representing the files.</returns>
+    /// <param name="absolutePath">The absolute path of the directory to search in.</param>
+    /// <param name="pattern">The search pattern to match against file names (e.g., "*.txt"). Default is "*" (all files).</param>
+    /// <param name="depth">The maximum number of directory levels to search. Default is 1 (current directory only).</param>
+    /// <param name="attributes">Optional file attributes that files must have to be included. Default is 0 (no attribute filtering).</param>
+    /// <returns>An enumerable collection of <see cref="AbsolutePath"/> objects representing the matching files.</returns>
+    /// <remarks>Returns an empty collection if the directory does not exist or if depth is 0.</remarks>
     public static IEnumerable<AbsolutePath> GetFiles(
         this AbsolutePath absolutePath,
         string pattern = "*",
@@ -111,13 +116,14 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Retrieves the directories within the directory specified by the <see cref="AbsolutePath"/> that match the specified pattern.
+    /// Retrieves all directories within the directory specified by the <see cref="AbsolutePath"/> that match the given criteria.
     /// </summary>
-    /// <param name="absolutePath">The absolute path of the directory.</param>
-    /// <param name="pattern">The search string to match against the names of directories. Default is "*".</param>
-    /// <param name="depth">The depth to search. Default is 1.</param>
-    /// <param name="attributes">The directory attributes to match against. Default is 0 (no specific attributes).</param>
-    /// <returns>An enumerable collection of <see cref="AbsolutePath"/> objects representing the directories.</returns>
+    /// <param name="absolutePath">The absolute path of the directory to search in.</param>
+    /// <param name="pattern">The search pattern to match against directory names (e.g., "bin*"). Default is "*" (all directories).</param>
+    /// <param name="depth">The maximum number of directory levels to search. Default is 1 (current directory only).</param>
+    /// <param name="attributes">Optional directory attributes that directories must have to be included. Default is 0 (no attribute filtering).</param>
+    /// <returns>An enumerable collection of <see cref="AbsolutePath"/> objects representing the matching directories.</returns>
+    /// <remarks>Returns an empty collection if the directory does not exist or if depth is 0.</remarks>
     public static IEnumerable<AbsolutePath> GetDirectories(
         this AbsolutePath absolutePath,
         string pattern = "*",
@@ -139,7 +145,7 @@ public static partial class AbsolutePathExtensions
                     yield return matchingDirectory;
 
                 depth--;
-                paths = paths.SelectMany(x => Directory.GetDirectories(x, "*", SearchOption.TopDirectoryOnly)).ToArray();
+                paths = [.. paths.SelectMany(x => Directory.GetDirectories(x, "*", SearchOption.TopDirectoryOnly))];
             }
         }
     }
@@ -147,8 +153,9 @@ public static partial class AbsolutePathExtensions
     /// <summary>
     /// Retrieves all files and directories within the directory specified by the <see cref="AbsolutePath"/>.
     /// </summary>
-    /// <param name="absolutePath">The absolute path of the directory.</param>
-    /// <returns>An enumerable collection of <see cref="AbsolutePath"/> objects representing the files and directories.</returns>
+    /// <param name="absolutePath">The absolute path of the directory to search in.</param>
+    /// <returns>An enumerable collection of <see cref="AbsolutePath"/> objects representing all files and directories.</returns>
+    /// <remarks>Returns an empty collection if the directory does not exist.</remarks>
     public static IEnumerable<AbsolutePath> GetPaths(this AbsolutePath absolutePath)
     {
         var paths = new List<AbsolutePath>();
@@ -158,52 +165,28 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Reads all the text from the file specified by the <see cref="AbsolutePath"/>.
+    /// Asynchronously reads all text from the file specified by the <see cref="AbsolutePath"/>.
     /// </summary>
-    /// <param name="absolutePath">The absolute path of the file.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the read operation.</param>
-    /// <returns>A task that represents the asynchronous read operation. The task result contains the text from the file.</returns>
+    /// <param name="absolutePath">The absolute path of the file to read.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous read operation. The result contains the file content as a string.</returns>
+    /// <exception cref="FileNotFoundException">The file does not exist.</exception>
+    /// <exception cref="IOException">An I/O error occurs while opening the file.</exception>
     public static Task<string> ReadAllText(this AbsolutePath absolutePath, CancellationToken cancellationToken = default)
     {
         return File.ReadAllTextAsync(absolutePath.Path, cancellationToken);
     }
 
     /// <summary>
-    /// Reads and deserializes a JSON file at the specified <see cref="AbsolutePath"/> into an object of type <typeparamref name="T"/>.
+    /// Determines whether the current path is a parent directory of the specified child path.
     /// </summary>
-    /// <typeparam name="T">The type of the object to deserialize to.</typeparam>
-    /// <param name="absolutePath">The absolute path of the file.</param>
-    /// <param name="jsonSerializerOptions">Options to control the behavior during deserialization.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the read operation.</param>
-    /// <returns>A task that represents the asynchronous read operation. The task result contains the deserialized object.</returns>
-#if NET7_0_OR_GREATER
-    [RequiresDynamicCode(RequiresDynamicCode)]
-#endif
-    [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
-    public static async Task<T?> Read<T>(this AbsolutePath absolutePath, JsonSerializerOptions? jsonSerializerOptions = null, CancellationToken cancellationToken = default)
-    {
-        return JsonSerializer.Deserialize<T>(await File.ReadAllTextAsync(absolutePath.Path, cancellationToken), jsonSerializerOptions);
-    }
-
-    /// <summary>
-    /// Reads and deserializes a JSON file at the specified <see cref="AbsolutePath"/> into an object of type <typeparamref name="T"/>.
-    /// </summary>
-    /// <typeparam name="T">The type of the object to deserialize to.</typeparam>
-    /// <param name="absolutePath">The absolute path of the file.</param>
-    /// <param name="jsonTypeInfo">Metadata about the type to convert.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the read operation.</param>
-    /// <returns>A task that represents the asynchronous read operation. The task result contains the deserialized object.</returns>
-    public static async Task<T?> Read<T>(this AbsolutePath absolutePath, JsonTypeInfo<T> jsonTypeInfo, CancellationToken cancellationToken = default)
-    {
-        return JsonSerializer.Deserialize(await File.ReadAllTextAsync(absolutePath.Path, cancellationToken), jsonTypeInfo);
-    }
-
-    /// <summary>
-    /// Determines whether the current path is a parent of the specified child path.
-    /// </summary>
-    /// <param name="parent">The parent path.</param>
-    /// <param name="child">The child path.</param>
-    /// <returns>True if the current path is a parent of the specified child path, otherwise false.</returns>
+    /// <param name="parent">The potential parent path to check.</param>
+    /// <param name="child">The potential child path to compare with.</param>
+    /// <returns><c>true</c> if the current path is a parent directory of the child path; otherwise, <c>false</c>.</returns>
+    /// <remarks>
+    /// This method checks if the child path is located within the parent directory or any of its subdirectories.
+    /// The method returns <c>false</c> if the paths are the same.
+    /// </remarks>
     public static bool IsParentOf(this AbsolutePath parent, AbsolutePath child)
     {
         var pathToCheck = child.Parent;
@@ -222,11 +205,14 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Determines whether the current path is a parent or the same as the specified child path.
+    /// Determines whether the current path is the same as or a parent directory of the specified child path.
     /// </summary>
-    /// <param name="parent">The parent path.</param>
-    /// <param name="child">The child path.</param>
-    /// <returns>True if the current path is a parent or the same as the specified child path, otherwise false.</returns>
+    /// <param name="parent">The potential parent path to check.</param>
+    /// <param name="child">The potential child path to compare with.</param>
+    /// <returns><c>true</c> if the current path is the same as or a parent directory of the child path; otherwise, <c>false</c>.</returns>
+    /// <remarks>
+    /// This method checks if the paths are equal or if the child path is located within the parent directory or any of its subdirectories.
+    /// </remarks>
     public static bool IsParentOrSelfOf(this AbsolutePath parent, AbsolutePath child)
     {
         if (parent == child)
@@ -238,27 +224,39 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Determines whether the current path is a child of the specified parent path.
+    /// Determines whether the current path is a child directory of the specified parent path.
     /// </summary>
-    /// <param name="child">The child path.</param>
-    /// <param name="parent">The parent path.</param>
-    /// <returns>True if the current path is a child of the specified parent path, otherwise false.</returns>
+    /// <param name="child">The potential child path to check.</param>
+    /// <param name="parent">The potential parent path to compare with.</param>
+    /// <returns><c>true</c> if the current path is a child directory of the parent path; otherwise, <c>false</c>.</returns>
+    /// <remarks>
+    /// This method checks if the child path is located within the parent directory or any of its subdirectories.
+    /// The method returns <c>false</c> if the paths are the same.
+    /// </remarks>
     public static bool IsChildOf(this AbsolutePath child, AbsolutePath parent)
     {
         return IsParentOf(parent, child);
     }
 
     /// <summary>
-    /// Determines whether the current path is a child or the same as the specified parent path.
+    /// Determines whether the current path is the same as or a child directory of the specified parent path.
     /// </summary>
-    /// <param name="child">The child path.</param>
-    /// <param name="parent">The parent path.</param>
-    /// <returns>True if the current path is a child or the same as the specified parent path, otherwise false.</returns>
+    /// <param name="child">The potential child path to check.</param>
+    /// <param name="parent">The potential parent path to compare with.</param>
+    /// <returns><c>true</c> if the current path is the same as or a child directory of the parent path; otherwise, <c>false</c>.</returns>
+    /// <remarks>
+    /// This method checks if the paths are equal or if the child path is located within the parent directory or any of its subdirectories.
+    /// </remarks>
     public static bool IsChildOrSelfOf(this AbsolutePath child, AbsolutePath parent)
     {
         return IsParentOrSelfOf(parent, child);
     }
 
+    /// <summary>
+    /// Creates a map of all files, folders, and symbolic links in the directory structure starting from the specified path.
+    /// </summary>
+    /// <param name="path">The starting path to map.</param>
+    /// <returns>A <see cref="FileMap"/> containing information about files, folders, and symbolic links.</returns>
     private static FileMap GetFileMap(AbsolutePath path)
     {
         List<AbsolutePath> files = [];
@@ -377,4 +375,34 @@ public static partial class AbsolutePathExtensions
 
         return new(path, [.. files], [.. folders], [.. arangedSymbolicLinks]);
     }
+}
+
+/// <summary>
+/// Represents a hierarchical map of files, folders, and symbolic links in a directory structure.
+/// </summary>
+/// <param name="source">The source path that was mapped.</param>
+/// <param name="files">The collection of file paths found.</param>
+/// <param name="folders">The collection of folder paths found.</param>
+/// <param name="symbolicLinks">The collection of symbolic links found, with their target paths.</param>
+internal class FileMap(AbsolutePath source, AbsolutePath[] files, AbsolutePath[] folders, (AbsolutePath Link, AbsolutePath Target)[] symbolicLinks)
+{
+    /// <summary>
+    /// Gets the source path that was mapped.
+    /// </summary>
+    public AbsolutePath Source { get; } = source;
+
+    /// <summary>
+    /// Gets the collection of file paths found.
+    /// </summary>
+    public AbsolutePath[] Files { get; } = files;
+
+    /// <summary>
+    /// Gets the collection of folder paths found.
+    /// </summary>
+    public AbsolutePath[] Folders { get; } = folders;
+
+    /// <summary>
+    /// Gets the collection of symbolic links found, with their target paths.
+    /// </summary>
+    public (AbsolutePath Link, AbsolutePath Target)[] SymbolicLinks { get; } = symbolicLinks;
 }
