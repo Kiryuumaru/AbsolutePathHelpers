@@ -30,7 +30,7 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     }
 
     /// <summary>
-    /// Gets or sets the absolute path.
+    /// Gets the absolute path.
     /// </summary>
     public string Path { get; } = System.IO.Path.GetFullPath(path);
 
@@ -75,28 +75,28 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     }
 
     /// <summary>
-    /// Combines the current <see cref="AbsolutePath"/> with a relative path.
+    /// Combines the current path with a relative path.
     /// </summary>
-    /// <param name="b">The base <see cref="AbsolutePath"/>.</param>
-    /// <param name="c">The relative path to combine with.</param>
+    /// <param name="basePath">The base <see cref="AbsolutePath"/>.</param>
+    /// <param name="relativePath">The relative path to combine with.</param>
     /// <returns>A new <see cref="AbsolutePath"/> representing the combined path.</returns>
-    public static AbsolutePath operator /(AbsolutePath b, string c)
+    public static AbsolutePath operator /(AbsolutePath basePath, string relativePath)
     {
-        return new AbsolutePath(System.IO.Path.Combine(b.Path, c));
+        return new AbsolutePath(System.IO.Path.Combine(basePath.Path, relativePath));
     }
 
     /// <summary>
-    /// Combines the current <see cref="AbsolutePath"/> with a relative path.
+    /// Combines the current path with multiple path segments.
     /// </summary>
-    /// <param name="b">The base <see cref="AbsolutePath"/>.</param>
-    /// <param name="c">The relative path to combine with.</param>
+    /// <param name="basePath">The base <see cref="AbsolutePath"/>.</param>
+    /// <param name="pathSegments">The path segments to combine with.</param>
     /// <returns>A new <see cref="AbsolutePath"/> representing the combined path.</returns>
-    public static AbsolutePath operator /(AbsolutePath b, IEnumerable<string> c)
+    public static AbsolutePath operator /(AbsolutePath basePath, IEnumerable<string> pathSegments)
     {
-        AbsolutePath path = b;
-        foreach (var item in c)
+        AbsolutePath path = basePath;
+        foreach (var segment in pathSegments)
         {
-            path = new AbsolutePath(System.IO.Path.Combine(path.Path, item));
+            path = new AbsolutePath(System.IO.Path.Combine(path.Path, segment));
         }
         return path;
     }
@@ -105,38 +105,43 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     /// Implicitly converts a string to an <see cref="AbsolutePath"/>.
     /// </summary>
     /// <param name="path">The string path to convert.</param>
+    /// <returns>A new <see cref="AbsolutePath"/> instance.</returns>
     public static implicit operator AbsolutePath(string path) => new(path);
 
     /// <summary>
-    /// Implicitly converts a string to an <see cref="AbsolutePath"/>.
+    /// Implicitly converts a string array to an <see cref="AbsolutePath"/>.
     /// </summary>
-    /// <param name="path">The string path to convert.</param>
-    public static implicit operator AbsolutePath(string[] path) => new(System.IO.Path.Combine(path));
+    /// <param name="pathSegments">The string path segments to combine and convert.</param>
+    /// <returns>A new <see cref="AbsolutePath"/> instance.</returns>
+    public static implicit operator AbsolutePath(string[] pathSegments) => new(System.IO.Path.Combine(pathSegments));
 
     /// <summary>
     /// Implicitly converts an <see cref="AbsolutePath"/> to a string.
     /// </summary>
     /// <param name="path">The <see cref="AbsolutePath"/> to convert.</param>
+    /// <returns>The string representation of the path.</returns>
     public static implicit operator string(AbsolutePath path) => path.Path;
 
     /// <summary>
     /// Implicitly converts an <see cref="AbsolutePath"/> to a <see cref="FileInfo"/>.
     /// </summary>
     /// <param name="path">The <see cref="AbsolutePath"/> to convert.</param>
+    /// <returns>A <see cref="FileInfo"/> instance for the path.</returns>
     public static implicit operator FileInfo?(AbsolutePath path) => path.ToFileInfo();
 
     /// <summary>
     /// Implicitly converts an <see cref="AbsolutePath"/> to a <see cref="DirectoryInfo"/>.
     /// </summary>
     /// <param name="path">The <see cref="AbsolutePath"/> to convert.</param>
+    /// <returns>A <see cref="DirectoryInfo"/> instance for the path.</returns>
     public static implicit operator DirectoryInfo?(AbsolutePath path) => path.ToDirectoryInfo();
 
     /// <summary>
     /// Determines whether two <see cref="AbsolutePath"/> instances are equal.
     /// </summary>
-    /// <param name="left">The left <see cref="AbsolutePath"/> to compare.</param>
-    /// <param name="right">The right <see cref="AbsolutePath"/> to compare.</param>
-    /// <returns><c>true</c> if the specified <see cref="AbsolutePath"/> instances are equal; otherwise, <c>false</c>.</returns>
+    /// <param name="left">The first <see cref="AbsolutePath"/> to compare.</param>
+    /// <param name="right">The second <see cref="AbsolutePath"/> to compare.</param>
+    /// <returns><c>true</c> if the paths are equal; otherwise, <c>false</c>.</returns>
     public static bool operator ==(AbsolutePath? left, AbsolutePath? right)
     {
         return EqualityComparer<AbsolutePath>.Default.Equals(left, right);
@@ -145,9 +150,9 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     /// <summary>
     /// Determines whether two <see cref="AbsolutePath"/> instances are not equal.
     /// </summary>
-    /// <param name="left">The left <see cref="AbsolutePath"/> to compare.</param>
-    /// <param name="right">The right <see cref="AbsolutePath"/> to compare.</param>
-    /// <returns><c>true</c> if the specified <see cref="AbsolutePath"/> instances are not equal; otherwise, <c>false</c>.</returns>
+    /// <param name="left">The first <see cref="AbsolutePath"/> to compare.</param>
+    /// <param name="right">The second <see cref="AbsolutePath"/> to compare.</param>
+    /// <returns><c>true</c> if the paths are not equal; otherwise, <c>false</c>.</returns>
     public static bool operator !=(AbsolutePath? left, AbsolutePath? right)
     {
         return !(left == right);
@@ -191,5 +196,23 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     public override int GetHashCode()
     {
         return HashCode.Combine(Path);
+    }
+
+    /// <summary>
+    /// Converts this <see cref="AbsolutePath"/> to a <see cref="FileInfo"/> instance.
+    /// </summary>
+    /// <returns>A <see cref="FileInfo"/> instance for this path.</returns>
+    public FileInfo? ToFileInfo()
+    {
+        return new FileInfo(Path);
+    }
+
+    /// <summary>
+    /// Converts this <see cref="AbsolutePath"/> to a <see cref="DirectoryInfo"/> instance.
+    /// </summary>
+    /// <returns>A <see cref="DirectoryInfo"/> instance for this path.</returns>
+    public DirectoryInfo? ToDirectoryInfo()
+    {
+        return new DirectoryInfo(Path);
     }
 }

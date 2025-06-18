@@ -10,14 +10,14 @@ namespace AbsolutePathHelpers;
 public static partial class AbsolutePathExtensions
 {
     /// <summary>
-    /// Compresses the specified directory to the specified archive file.
+    /// Compresses the specified directory to an archive file with format determined by the archive file extension.
     /// </summary>
-    /// <param name="directory">The directory to compress.</param>
-    /// <param name="archiveFile">The destination archive file.</param>
-    /// <param name="filter">Optional filter to select files to include in the archive.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    /// <exception cref="Exception">Thrown if the archive file extension is unknown.</exception>
+    /// <param name="directory">The directory containing files to compress.</param>
+    /// <param name="archiveFile">The destination archive file path (.zip, .tar.gz, .tgz, .tar.bz2, .tbz2, or .tbz).</param>
+    /// <param name="filter">Optional filter function to select which files to include in the archive.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous compression operation.</returns>
+    /// <exception cref="Exception">Thrown if the archive file has an unsupported extension.</exception>
     public static Task CompressTo(this AbsolutePath directory, AbsolutePath archiveFile, Func<AbsolutePath, bool>? filter = null, CancellationToken cancellationToken = default)
     {
         return archiveFile.Extension.ToLowerInvariant() switch
@@ -30,13 +30,13 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Uncompresses the specified archive file to the specified directory.
+    /// Extracts the contents of an archive file to the specified directory, with format determined by the archive file extension.
     /// </summary>
-    /// <param name="archiveFile">The archive file to uncompress.</param>
-    /// <param name="directory">The destination directory.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    /// <exception cref="Exception">Thrown if the archive file extension is unknown.</exception>
+    /// <param name="archiveFile">The archive file to extract (.zip, .tar.gz, .tgz, .tar.bz2, .tbz2, or .tbz).</param>
+    /// <param name="directory">The destination directory where contents will be extracted.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous extraction operation.</returns>
+    /// <exception cref="Exception">Thrown if the archive file has an unsupported extension.</exception>
     public static Task UncompressTo(this AbsolutePath archiveFile, AbsolutePath directory, CancellationToken cancellationToken = default)
     {
         return archiveFile.Extension.ToLowerInvariant() switch
@@ -49,120 +49,112 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Compresses the specified directory to a ZIP archive.
+    /// Compresses the specified directory to a ZIP archive file.
     /// </summary>
-    /// <param name="directory">The directory to compress.</param>
-    /// <param name="archiveFile">The destination ZIP archive file.</param>
-    /// <param name="filter">Optional filter to select files to include in the archive.</param>
-    /// <param name="compressionLevel">The level of compression to apply.</param>
-    /// <param name="fileMode">The file mode to use when creating the archive.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public static Task ZipTo(this AbsolutePath directory, AbsolutePath archiveFile, Func<AbsolutePath, bool>? filter = null, CompressionLevel compressionLevel = CompressionLevel.Optimal, FileMode fileMode = FileMode.CreateNew, CancellationToken cancellationToken = default)
+    /// <param name="directory">The directory containing files to compress.</param>
+    /// <param name="archiveFile">The destination ZIP archive file path.</param>
+    /// <param name="filter">Optional filter function to select which files to include in the archive.</param>
+    /// <param name="compressionLevel">The compression level to use (Fastest, Optimal, or NoCompression).</param>
+    /// <param name="fileMode">The file mode to use when creating the archive file.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous ZIP compression operation.</returns>
+    public static async Task ZipTo(this AbsolutePath directory, AbsolutePath archiveFile, Func<AbsolutePath, bool>? filter = null, CompressionLevel compressionLevel = CompressionLevel.Optimal, FileMode fileMode = FileMode.CreateNew, CancellationToken cancellationToken = default)
     {
-        return Task.Run(() =>
+        archiveFile.Parent?.CreateDirectory();
+
+        filter ??= _ => true;
+
+        List<AbsolutePath> list = [.. directory.GetFiles("*", int.MaxValue).Where(filter)];
+        ZipArchive zipArchive;
+        await using FileStream stream = File.Open(archiveFile, fileMode, FileAccess.ReadWrite);
+        zipArchive = new ZipArchive(stream, ZipArchiveMode.Create);
+        try
         {
-            archiveFile.Parent?.CreateDirectory();
-
-            filter ??= (AbsolutePath _) => true;
-
-            List<AbsolutePath> list = directory.GetFiles("*", int.MaxValue).Where(filter).ToList();
-            ZipArchive zipArchive;
-            using FileStream stream = File.Open(archiveFile, fileMode, FileAccess.ReadWrite);
-            zipArchive = new ZipArchive(stream, ZipArchiveMode.Create);
-            try
+            foreach (var item in list)
             {
-                foreach (var item in list)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    AddFile(item);
-                }
+                cancellationToken.ThrowIfCancellationRequested();
+                AddFile(item);
             }
-            finally
+        }
+        finally
+        {
+            if (zipArchive != null)
             {
-                if (zipArchive != null)
-                {
-                    ((IDisposable)zipArchive).Dispose();
-                }
+                ((IDisposable)zipArchive).Dispose();
             }
+        }
 
-            void AddFile(AbsolutePath file)
-            {
-                zipArchive.CreateEntryFromFile(file, UnixRelativeName(file, directory), compressionLevel);
-            }
-
-        }, cancellationToken);
+        void AddFile(AbsolutePath file)
+        {
+            zipArchive.CreateEntryFromFile(file, UnixRelativeName(file, directory), compressionLevel);
+        }
     }
 
     /// <summary>
-    /// Unzips the specified ZIP archive to the specified directory.
+    /// Extracts the contents of a ZIP archive file to the specified directory.
     /// </summary>
-    /// <param name="archiveFile">The ZIP archive file to uncompress.</param>
-    /// <param name="directory">The destination directory.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public static Task UnZipTo(this AbsolutePath archiveFile, AbsolutePath directory, CancellationToken cancellationToken = default)
+    /// <param name="archiveFile">The ZIP archive file to extract.</param>
+    /// <param name="directory">The destination directory where ZIP contents will be extracted.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous ZIP extraction operation.</returns>
+    public static async Task UnZipTo(this AbsolutePath archiveFile, AbsolutePath directory, CancellationToken cancellationToken = default)
     {
-        return Task.Run(async () =>
+        using var zipFile = System.IO.Compression.ZipFile.OpenRead(archiveFile);
+        try
         {
-            using var zipFile = System.IO.Compression.ZipFile.OpenRead(archiveFile);
-            try
-            {
 
-                foreach (ZipArchiveEntry entry in zipFile.Entries)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    await HandleEntry(entry);
-                }
-            }
-            finally
+            foreach (ZipArchiveEntry entry in zipFile.Entries)
             {
-                if (zipFile != null)
-                {
-                    ((IDisposable)zipFile).Dispose();
-                }
+                cancellationToken.ThrowIfCancellationRequested();
+                await HandleEntry(entry);
             }
-
-            async Task HandleEntry(ZipArchiveEntry entry)
+        }
+        finally
+        {
+            if (zipFile != null)
             {
-                AbsolutePath absolutePath = directory / entry.FullName;
-                absolutePath.Parent?.CreateDirectory();
-                using Stream stream = entry.Open();
-                using FileStream destination = File.Open(absolutePath, FileMode.Create);
-                await stream.CopyToAsync(destination, cancellationToken);
+                ((IDisposable)zipFile).Dispose();
             }
+        }
 
-        }, cancellationToken);
+        async Task HandleEntry(ZipArchiveEntry entry)
+        {
+            AbsolutePath absolutePath = directory / entry.FullName;
+            absolutePath.Parent?.CreateDirectory();
+            await using Stream stream = entry.Open();
+            await using FileStream destination = File.Open(absolutePath, FileMode.Create);
+            await stream.CopyToAsync(destination, cancellationToken);
+        }
     }
 
     /// <summary>
-    /// Compresses the specified files in a directory to a TAR.GZ archive.
+    /// Compresses the specified files from a directory to a TAR.GZ archive file.
     /// </summary>
     /// <param name="baseDirectory">The base directory containing the files to compress.</param>
-    /// <param name="archiveFile">The destination TAR.GZ archive file.</param>
-    /// <param name="files">The files to compress.</param>
-    /// <param name="fileMode">The file mode to use when creating the archive.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <param name="archiveFile">The destination TAR.GZ archive file path.</param>
+    /// <param name="files">The collection of files to include in the archive.</param>
+    /// <param name="fileMode">The file mode to use when creating the archive file.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous TAR.GZ compression operation.</returns>
     public static Task TarGZipTo(this AbsolutePath baseDirectory, AbsolutePath archiveFile, IEnumerable<AbsolutePath> files, FileMode fileMode = FileMode.CreateNew, CancellationToken cancellationToken = default)
     {
-        return CompressTar(baseDirectory, archiveFile, files.ToList(), fileMode, (Stream x) => new GZipOutputStream(x), cancellationToken);
+        return CompressTar(baseDirectory, archiveFile, [.. files], fileMode, stream => new GZipOutputStream(stream), cancellationToken);
     }
 
     /// <summary>
-    /// Compresses the specified directory to a TAR.GZ archive.
+    /// Compresses the specified directory to a TAR.GZ archive file.
     /// </summary>
-    /// <param name="directory">The directory to compress.</param>
-    /// <param name="archiveFile">The destination TAR.GZ archive file.</param>
-    /// <param name="filter">Optional filter to select files to include in the archive.</param>
-    /// <param name="fileMode">The file mode to use when creating the archive.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <param name="directory">The directory containing files to compress.</param>
+    /// <param name="archiveFile">The destination TAR.GZ archive file path.</param>
+    /// <param name="filter">Optional filter function to select which files to include in the archive.</param>
+    /// <param name="fileMode">The file mode to use when creating the archive file.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous TAR.GZ compression operation.</returns>
     public static Task TarGZipTo(this AbsolutePath directory, AbsolutePath archiveFile, Func<AbsolutePath, bool>? filter = null, FileMode fileMode = FileMode.CreateNew, CancellationToken cancellationToken = default)
     {
         return Task.Run(async () =>
         {
-            filter ??= (AbsolutePath _) => true;
+            filter ??= _ => true;
 
             IEnumerable<AbsolutePath> files = directory.GetFiles("*", int.MaxValue).Where(filter);
             await directory.TarGZipTo(archiveFile, files, fileMode, cancellationToken);
@@ -171,33 +163,33 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Compresses the specified files in a directory to a TAR.BZ2 archive.
+    /// Compresses the specified files from a directory to a TAR.BZ2 archive file.
     /// </summary>
     /// <param name="directory">The directory containing the files to compress.</param>
-    /// <param name="archiveFile">The destination TAR.BZ2 archive file.</param>
-    /// <param name="files">The files to compress.</param>
-    /// <param name="fileMode">The file mode to use when creating the archive.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <param name="archiveFile">The destination TAR.BZ2 archive file path.</param>
+    /// <param name="files">The collection of files to include in the archive.</param>
+    /// <param name="fileMode">The file mode to use when creating the archive file.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous TAR.BZ2 compression operation.</returns>
     public static Task TarBZip2To(this AbsolutePath directory, AbsolutePath archiveFile, IEnumerable<AbsolutePath> files, FileMode fileMode = FileMode.CreateNew, CancellationToken cancellationToken = default)
     {
-        return CompressTar(directory, archiveFile, files.ToList(), fileMode, (Stream x) => new BZip2OutputStream(x), cancellationToken);
+        return CompressTar(directory, archiveFile, [.. files], fileMode, stream => new BZip2OutputStream(stream), cancellationToken);
     }
 
     /// <summary>
-    /// Compresses the specified directory to a TAR.BZ2 archive.
+    /// Compresses the specified directory to a TAR.BZ2 archive file.
     /// </summary>
-    /// <param name="directory">The directory to compress.</param>
-    /// <param name="archiveFile">The destination TAR.BZ2 archive file.</param>
-    /// <param name="filter">Optional filter to select files to include in the archive.</param>
-    /// <param name="fileMode">The file mode to use when creating the archive.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <param name="directory">The directory containing files to compress.</param>
+    /// <param name="archiveFile">The destination TAR.BZ2 archive file path.</param>
+    /// <param name="filter">Optional filter function to select which files to include in the archive.</param>
+    /// <param name="fileMode">The file mode to use when creating the archive file.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous TAR.BZ2 compression operation.</returns>
     public static Task TarBZip2To(this AbsolutePath directory, AbsolutePath archiveFile, Func<AbsolutePath, bool>? filter = null, FileMode fileMode = FileMode.CreateNew, CancellationToken cancellationToken = default)
     {
         return Task.Run(async () =>
         {
-            filter ??= (AbsolutePath _) => true;
+            filter ??= _ => true;
 
             IEnumerable<AbsolutePath> files = directory.GetFiles("*", int.MaxValue).Where(filter);
             await directory.TarBZip2To(archiveFile, files, fileMode, cancellationToken);
@@ -206,69 +198,63 @@ public static partial class AbsolutePathExtensions
     }
 
     /// <summary>
-    /// Uncompresses the specified TAR.GZ archive to the specified directory.
+    /// Extracts the contents of a TAR.GZ archive file to the specified directory.
     /// </summary>
-    /// <param name="archiveFile">The TAR.GZ archive file to uncompress.</param>
-    /// <param name="directory">The destination directory.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <param name="archiveFile">The TAR.GZ archive file to extract.</param>
+    /// <param name="directory">The destination directory where TAR.GZ contents will be extracted.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous TAR.GZ extraction operation.</returns>
     public static Task UnTarGZipTo(this AbsolutePath archiveFile, AbsolutePath directory, CancellationToken cancellationToken = default)
     {
-        return UncompressTar(archiveFile, directory, (Stream x) => new GZipInputStream(x), cancellationToken);
+        return UncompressTar(archiveFile, directory, stream => new GZipInputStream(stream), cancellationToken);
     }
 
     /// <summary>
-    /// Uncompresses the specified TAR.BZ2 archive to the specified directory.
+    /// Extracts the contents of a TAR.BZ2 archive file to the specified directory.
     /// </summary>
-    /// <param name="archiveFile">The TAR.BZ2 archive file to uncompress.</param>
-    /// <param name="directory">The destination directory.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <param name="archiveFile">The TAR.BZ2 archive file to extract.</param>
+    /// <param name="directory">The destination directory where TAR.BZ2 contents will be extracted.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous TAR.BZ2 extraction operation.</returns>
     public static Task UnTarBZip2To(this AbsolutePath archiveFile, AbsolutePath directory, CancellationToken cancellationToken = default)
     {
-        return UncompressTar(archiveFile, directory, (Stream x) => new BZip2InputStream(x), cancellationToken);
+        return UncompressTar(archiveFile, directory, stream => new BZip2InputStream(stream), cancellationToken);
     }
 
-    private static Task CompressTar(AbsolutePath baseDirectory, AbsolutePath archiveFile, IReadOnlyCollection<AbsolutePath> files, FileMode fileMode, Func<Stream, Stream> outputStreamFactory, CancellationToken cancellationToken)
+    private static async Task CompressTar(AbsolutePath baseDirectory, AbsolutePath archiveFile, IReadOnlyCollection<AbsolutePath> files, FileMode fileMode, Func<Stream, Stream> outputStreamFactory, CancellationToken cancellationToken)
     {
-        return Task.Run(() =>
+        archiveFile.Parent?.CreateDirectory();
+
+        await using var fileStream = File.Open(archiveFile, fileMode, FileAccess.ReadWrite);
+        await using var outputStream = outputStreamFactory(fileStream);
+        using var tarArchive = TarArchive.CreateOutputTarArchive(outputStream);
+
+        void AddFile(AbsolutePath file)
         {
-            archiveFile.Parent?.CreateDirectory();
+            var entry = TarEntry.CreateEntryFromFile(file);
+            entry.Name = UnixRelativeName(file, baseDirectory);
 
-            using var fileStream = File.Open(archiveFile, fileMode, FileAccess.ReadWrite);
-            using var outputStream = outputStreamFactory(fileStream);
-            using var tarArchive = TarArchive.CreateOutputTarArchive(outputStream);
+            tarArchive.WriteEntry(entry, recurse: false);
+        }
 
-            void AddFile(AbsolutePath file)
-            {
-                var entry = TarEntry.CreateEntryFromFile(file);
-                entry.Name = UnixRelativeName(file, baseDirectory);
-
-                tarArchive.WriteEntry(entry, recurse: false);
-            }
-
-            foreach (var file in files)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                AddFile(file);
-            }
-
-        }, cancellationToken);
+        foreach (var file in files)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            AddFile(file);
+        }
     }
 
-    private static Task UncompressTar(AbsolutePath archiveFile, AbsolutePath directory, Func<Stream, Stream> inputStreamFactory, CancellationToken cancellationToken)
+    private static async Task UncompressTar(AbsolutePath archiveFile, AbsolutePath directory, Func<Stream, Stream> inputStreamFactory, CancellationToken cancellationToken)
     {
-        return Task.Run(() =>
-        {
-            using var fileStream = File.OpenRead(archiveFile);
-            using var inputStream = inputStreamFactory(fileStream);
-            using var tarArchive = TarArchive.CreateInputTarArchive(inputStream, nameEncoding: null);
+        await using var fileStream = File.OpenRead(archiveFile);
+        await using var inputStream = inputStreamFactory(fileStream);
+        using var tarArchive = TarArchive.CreateInputTarArchive(inputStream, nameEncoding: null);
 
-            directory.CreateDirectory();
+        directory.CreateDirectory();
 
-            tarArchive.ExtractContents(directory);
+        tarArchive.ExtractContents(directory);
 
-        }, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
     }
 
     private static string UnixRelativeName(AbsolutePath file, AbsolutePath directory)
@@ -283,7 +269,7 @@ public static partial class AbsolutePathExtensions
 
         while ((relativeName.Length > 0) && (relativeName[0] == '/'))
         {
-            relativeName = relativeName.Remove(0, 1);
+            relativeName = relativeName[1..];
         }
 
         return relativeName;
