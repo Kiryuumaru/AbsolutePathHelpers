@@ -102,7 +102,6 @@ public static partial class AbsolutePathExtensions
         using var zipFile = System.IO.Compression.ZipFile.OpenRead(archiveFile);
         try
         {
-
             foreach (ZipArchiveEntry entry in zipFile.Entries)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -121,9 +120,16 @@ public static partial class AbsolutePathExtensions
         {
             AbsolutePath absolutePath = directory / entry.FullName;
             absolutePath.Parent?.CreateDirectory();
-            await using Stream stream = entry.Open();
-            await using FileStream destination = File.Open(absolutePath, FileMode.Create);
-            await stream.CopyToAsync(destination, cancellationToken);
+            if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\'))
+            {
+                absolutePath.CreateDirectory();
+            }
+            else
+            {
+                await using Stream stream = entry.Open();
+                await using FileStream destination = File.Open(absolutePath, FileMode.Create);
+                await stream.CopyToAsync(destination, cancellationToken);
+            }
         }
     }
 
