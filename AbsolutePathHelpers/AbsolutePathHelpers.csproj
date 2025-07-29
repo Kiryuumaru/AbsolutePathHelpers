@@ -10,7 +10,8 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-	</PropertyGroup>
+		<SuppressTfmSupportBuildWarnings>false</SuppressTfmSupportBuildWarnings>
+</PropertyGroup>
 
 	<PropertyGroup>
 		<Authors>Kiryuumaru</Authors>
@@ -38,7 +39,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MultiFormatDataConverter" Version="0.2.6" />
+		<PackageReference Include="MultiFormatDataConverter" Version="0.2.9" />
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
 		<PackageReference Include="YamlDotNet" Version="16.3.0" />
 	</ItemGroup>
