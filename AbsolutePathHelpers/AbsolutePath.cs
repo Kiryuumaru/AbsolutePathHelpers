@@ -40,7 +40,7 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
     /// <returns>
     /// <c>true</c> if the <see cref="AbsolutePath"/> was created successfully; otherwise, <c>false</c>.
     /// </returns>
-    public static bool TryCreate(string path, [NotNullWhen(true)] out AbsolutePath? absolutePath)
+    public static bool TryParse(string? path, [NotNullWhen(true)] out AbsolutePath? absolutePath)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
