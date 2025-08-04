@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace AbsolutePathHelpers;
 
@@ -27,6 +28,38 @@ public class AbsolutePath(string path) : IEquatable<AbsolutePath?>
         return new AbsolutePath(System.IO.Path.IsPathRooted(path)
             ? System.IO.Path.GetFullPath(path)
             : System.IO.Path.GetFullPath(System.IO.Path.Combine(Directory.GetCurrentDirectory(), path)));
+    }
+
+    /// <summary>
+    /// Attempts to create a new instance of <see cref="AbsolutePath"/> from the specified path string.
+    /// </summary>
+    /// <param name="path">The path to use for the <see cref="AbsolutePath"/>.</param>
+    /// <param name="absolutePath">
+    /// When this method returns, contains the created <see cref="AbsolutePath"/> if the path is valid; otherwise, <c>null</c>.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> if the <see cref="AbsolutePath"/> was created successfully; otherwise, <c>false</c>.
+    /// </returns>
+    public static bool TryCreate(string path, [NotNullWhen(true)] out AbsolutePath? absolutePath)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            absolutePath = null;
+            return false;
+        }
+        
+        try
+        {
+            absolutePath = new AbsolutePath(System.IO.Path.IsPathRooted(path)
+                ? System.IO.Path.GetFullPath(path)
+                : System.IO.Path.GetFullPath(System.IO.Path.Combine(Directory.GetCurrentDirectory(), path)));
+            return true;
+        }
+        catch
+        {
+            absolutePath = null;
+            return false;
+        }
     }
 
     /// <summary>
