@@ -1,11 +1,12 @@
+using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Entry;
 using NukeBuildHelpers.Entry.Extensions;
-using NukeBuildHelpers.Runner.Abstraction;
 using NukeBuildHelpers.RunContext.Extensions;
+using NukeBuildHelpers.Runner.Abstraction;
 
 class Build : BaseNukeBuildHelpers
 {
@@ -59,6 +60,11 @@ class Build : BaseNukeBuildHelpers
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(projectPath));
             DotNetTasks.DotNetTest(_ => _
+                .SetProcessAdditionalArguments(
+                    "--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\" " +
+                    "-- " +
+                    "RunConfiguration.CollectSourceInformation=true " +
+                    "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencovere ")
                 .SetProjectFile(projectPath));
         })
         .Matrix([ new { Id = "LINUX", RunnerOS = RunnerOS.Ubuntu2204 }, new { Id = "WINDOWS", RunnerOS = RunnerOS.Windows2022 }],
