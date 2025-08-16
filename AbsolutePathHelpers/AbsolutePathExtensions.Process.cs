@@ -168,6 +168,11 @@ public static partial class AbsolutePathExtensions
     /// </remarks>
     private static async Task<Process[]> WhoIsLockingLinux(string path, CancellationToken cancellationToken)
     {
+        if (!File.Exists(path) && !Directory.Exists(path))
+        {
+            return [];
+        }
+
         ConcurrentDictionary<int, Process> processMap = [];
 
         var startInfo = new ProcessStartInfo
