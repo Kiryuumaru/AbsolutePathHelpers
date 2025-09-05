@@ -1,9 +1,10 @@
-﻿using ICSharpCode.SharpZipLib.BZip2;
+using ICSharpCode.SharpZipLib.BZip2;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using System.IO;
 using System.IO.Compression;
-using System.Xml.Linq;
+using SharpCompress.Archives.SevenZip;
+using SharpCompress.Common;
 
 namespace AbsolutePathHelpers;
 
@@ -20,32 +21,42 @@ public static partial class AbsolutePathExtensions
     /// <exception cref="Exception">Thrown if the archive file has an unsupported extension.</exception>
     public static Task CompressTo(this AbsolutePath directory, AbsolutePath archiveFile, Func<AbsolutePath, bool>? filter = null, CancellationToken cancellationToken = default)
     {
-        return archiveFile.Extension.ToLowerInvariant() switch
-        {
-            ".zip" => directory.ZipTo(archiveFile, filter, cancellationToken: cancellationToken),
-            ".tar.gz" or ".tgz" => directory.TarGZipTo(archiveFile, filter, cancellationToken: cancellationToken),
-            ".tar.bz2" or ".tbz2" or ".tbz" => directory.TarBZip2To(archiveFile, filter, cancellationToken: cancellationToken),
-            _ => throw new Exception("Unknown archive extension for archive '" + Path.GetFileName(archiveFile) + "'"),
-        };
+        var fileName = archiveFile.Name.ToLowerInvariant();
+        
+        if (fileName.EndsWith(".zip"))
+            return directory.ZipTo(archiveFile, filter, cancellationToken: cancellationToken);
+        if (fileName.EndsWith(".tar.gz") || fileName.EndsWith(".tgz"))
+            return directory.TarGZipTo(archiveFile, filter, cancellationToken: cancellationToken);
+        if (fileName.EndsWith(".tar.bz2") || fileName.EndsWith(".tbz2") || fileName.EndsWith(".tbz"))
+            return directory.TarBZip2To(archiveFile, filter, cancellationToken: cancellationToken);
+        if (fileName.EndsWith(".7z"))
+            throw new NotSupportedException("Creating 7z archives is not supported. Use .zip or .tar.gz instead.");
+            
+        throw new Exception("Unknown archive extension for archive '" + Path.GetFileName(archiveFile) + "'");
     }
 
     /// <summary>
     /// Extracts the contents of an archive file to the specified directory, with format determined by the archive file extension.
     /// </summary>
-    /// <param name="archiveFile">The archive file to extract (.zip, .tar.gz, .tgz, .tar.bz2, .tbz2, or .tbz).</param>
+    /// <param name="archiveFile">The archive file to extract (.zip, .tar.gz, .tgz, .tar.bz2, .tbz2, .tbz, or .7z).</param>
     /// <param name="directory">The destination directory where contents will be extracted.</param>
     /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
     /// <returns>A task representing the asynchronous extraction operation.</returns>
     /// <exception cref="Exception">Thrown if the archive file has an unsupported extension.</exception>
     public static Task UncompressTo(this AbsolutePath archiveFile, AbsolutePath directory, CancellationToken cancellationToken = default)
     {
-        return archiveFile.Extension.ToLowerInvariant() switch
-        {
-            ".zip" => archiveFile.UnZipTo(directory, cancellationToken: cancellationToken),
-            ".tar.gz" or ".tgz" => archiveFile.UnTarGZipTo(directory, cancellationToken: cancellationToken),
-            ".tar.bz2" or ".tbz2" or ".tbz" => archiveFile.UnTarBZip2To(directory, cancellationToken: cancellationToken),
-            _ => throw new Exception("Unknown archive extension for archive '" + Path.GetFileName(archiveFile) + "'"),
-        };
+        var fileName = archiveFile.Name.ToLowerInvariant();
+        
+        if (fileName.EndsWith(".zip"))
+            return archiveFile.UnZipTo(directory, cancellationToken: cancellationToken);
+        if (fileName.EndsWith(".tar.gz") || fileName.EndsWith(".tgz"))
+            return archiveFile.UnTarGZipTo(directory, cancellationToken: cancellationToken);
+        if (fileName.EndsWith(".tar.bz2") || fileName.EndsWith(".tbz2") || fileName.EndsWith(".tbz"))
+            return archiveFile.UnTarBZip2To(directory, cancellationToken: cancellationToken);
+        if (fileName.EndsWith(".7z"))
+            return archiveFile.UnSevenZipTo(directory, cancellationToken: cancellationToken);
+            
+        throw new Exception("Unknown archive extension for archive '" + Path.GetFileName(archiveFile) + "'");
     }
 
     /// <summary>
@@ -225,6 +236,57 @@ public static partial class AbsolutePathExtensions
     public static Task UnTarBZip2To(this AbsolutePath archiveFile, AbsolutePath directory, CancellationToken cancellationToken = default)
     {
         return UncompressTar(archiveFile, directory, stream => new BZip2InputStream(stream), cancellationToken);
+    }
+
+    /// <summary>
+    /// Compresses the specified directory to a 7z archive file.
+    /// NOTE: Creating standard 7z archives is not currently supported due to library limitations.
+    /// This method throws a NotSupportedException to clearly indicate the limitation.
+    /// </summary>
+    /// <param name="directory">The directory containing files to compress.</param>
+    /// <param name="archiveFile">The destination 7z archive file path.</param>
+    /// <param name="filter">Optional filter function to select which files to include in the archive.</param>
+    /// <param name="compressionLevel">The compression level to use (1-9, where 9 is maximum compression).</param>
+    /// <param name="fileMode">The file mode to use when creating the archive file.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous 7z compression operation.</returns>
+    /// <exception cref="NotSupportedException">Thrown because standard 7z creation is not supported. Use ZIP or TAR.GZ instead.</exception>
+    public static Task SevenZipTo(this AbsolutePath directory, AbsolutePath archiveFile, Func<AbsolutePath, bool>? filter = null, int compressionLevel = 5, FileMode fileMode = FileMode.CreateNew, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Creating standard 7z archives is not currently supported. " +
+            "The underlying SharpCompress library does not support writing 7z files. " +
+            "Consider using ZIP (.zip) or TAR.GZ (.tar.gz) formats instead, which provide excellent compression and are widely supported.");
+    }
+
+    /// <summary>
+    /// Extracts the contents of a 7z archive file to the specified directory.
+    /// This method can extract standard 7z files created by tools like 7-Zip, WinRAR, etc.
+    /// </summary>
+    /// <param name="archiveFile">The 7z archive file to extract.</param>
+    /// <param name="directory">The destination directory where 7z contents will be extracted.</param>
+    /// <param name="cancellationToken">A token that can be used to request cancellation of the operation.</param>
+    /// <returns>A task representing the asynchronous 7z extraction operation.</returns>
+    public static async Task UnSevenZipTo(this AbsolutePath archiveFile, AbsolutePath directory, CancellationToken cancellationToken = default)
+    {
+        await Task.Run(() =>
+        {
+            directory.CreateDirectory();
+            
+            using var fileStream = File.OpenRead(archiveFile);
+            using var archive = SevenZipArchive.Open(fileStream);
+            
+            foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                
+                var targetPath = directory / entry.Key;
+                targetPath.Parent?.CreateDirectory();
+                
+                using var entryStream = entry.OpenEntryStream();
+                using var outputStream = File.Create(targetPath);
+                entryStream.CopyTo(outputStream);
+            }
+        }, cancellationToken);
     }
 
     private static async Task CompressTar(AbsolutePath baseDirectory, AbsolutePath archiveFile, IReadOnlyCollection<AbsolutePath> files, FileMode fileMode, Func<Stream, Stream> outputStreamFactory, CancellationToken cancellationToken)

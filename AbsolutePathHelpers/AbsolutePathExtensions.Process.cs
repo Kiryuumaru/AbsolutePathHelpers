@@ -64,9 +64,6 @@ public static partial class AbsolutePathExtensions
     // SHA256 hash of the embedded Handle.exe for verification
     private const string _HandleExeSHA256 = "84c22579ca09f4fd8a8d9f56a6348c4ad2a92d4722c9f1213dd73c2f68a381e3";
 
-    // Semaphore to ensure only one instance of Handle.exe runs at a time
-    private static readonly SemaphoreSlim _handleLocker = new(1);
-
     /// <summary>
     /// Identifies processes that have open handles to the specified file or directory on Windows.
     /// </summary>
@@ -85,35 +82,33 @@ public static partial class AbsolutePathExtensions
     {
         AbsolutePath handlePath = Path.GetTempPath();
         handlePath /= "sysinternals";
-        handlePath /= "handle.exe";
-
-        if (!handlePath.FileExists() || await handlePath.GetHashSHA256(cancellationToken: cancellationToken) != _HandleExeSHA256)
-        {
-            using var stream = Assembly.GetAssembly(typeof(AbsolutePath))!.GetManifestResourceStream(_HandleExeEmbeddedPath)!;
-            byte[] bytes = new byte[(int)stream.Length];
-            var _ = await stream.ReadAsync(bytes, cancellationToken);
-            handlePath.Parent?.CreateDirectory();
-            File.WriteAllBytes(handlePath, bytes);
-        }
+        handlePath /= $"{Guid.NewGuid()}.exe";
 
         ConcurrentDictionary<int, Process> processMap = [];
 
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = handlePath,
-            Arguments = $"-accepteula -nobanner -v \"{path}\"",
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var handleProcess = new Process { StartInfo = startInfo };
-
-        string? handleResult = null;
-
         try
         {
-            await _handleLocker.WaitAsync(cancellationToken);
+            if (!handlePath.FileExists() || await handlePath.GetHashSHA256(cancellationToken: cancellationToken) != _HandleExeSHA256)
+            {
+                using var stream = Assembly.GetAssembly(typeof(AbsolutePath))!.GetManifestResourceStream(_HandleExeEmbeddedPath)!;
+                byte[] bytes = new byte[(int)stream.Length];
+                var _ = await stream.ReadAsync(bytes, cancellationToken);
+                handlePath.Parent?.CreateDirectory();
+                await File.WriteAllBytesAsync(handlePath, bytes, cancellationToken);
+            }
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = handlePath,
+                Arguments = $"-accepteula -nobanner -v \"{path}\"",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var handleProcess = new Process { StartInfo = startInfo };
+
+            string? handleResult = null;
 
             handleProcess.Start();
 
@@ -122,31 +117,41 @@ public static partial class AbsolutePathExtensions
 #else
             handleResult = await handleProcess.StandardOutput.ReadToEndAsync();
 #endif
+
+            var handleResultSplit = handleResult.Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries);
+            if (handleResultSplit.Length > 1)
+            {
+                for (int i = 1; i < handleResultSplit.Length; i++)
+                {
+                    var line = handleResultSplit[i].Split(',');
+                    if (line.Length > 1 && int.TryParse(line[1], out var pid))
+                    {
+                        try
+                        {
+                            var lockingProcess = Process.GetProcessById(pid);
+                            processMap.TryAdd(pid, lockingProcess);
+                        }
+                        catch { }
+                    }
+                }
+            }
+
+            return [.. processMap.Values.Where(i => !i.HasExited)];
         }
         finally
         {
-            _handleLocker.Release();
-        }
-
-        var handleResultSplit = handleResult.Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries);
-        if (handleResultSplit.Length > 1)
-        {
-            for (int i = 1; i < handleResultSplit.Length; i++)
+            using var timeCt = new CancellationTokenSource(5000);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeCt.Token);
+            while (handlePath.FileExists() && !linked.IsCancellationRequested)
             {
-                var line = handleResultSplit[i].Split(',');
-                if (line.Length > 1 && int.TryParse(line[1], out var pid))
+                try
                 {
-                    try
-                    {
-                        var lockingProcess = Process.GetProcessById(pid);
-                        processMap.TryAdd(pid, lockingProcess);
-                    }
-                    catch { }
+                    await handlePath.Delete(cancellationToken: cancellationToken);
+                    await Task.Delay(50, cancellationToken);
                 }
+                catch { }
             }
         }
-
-        return [.. processMap.Values.Where(i => !i.HasExited)];
     }
 
     #endregion
