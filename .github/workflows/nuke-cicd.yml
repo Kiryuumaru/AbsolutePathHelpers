@@ -79,6 +79,11 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSBUILD_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSBUILD_CHECKOUT_SUBMODULES }}
         persist-credentials: true
+    - name: Download absolute_path_helpers pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___absolute_path_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -90,11 +95,18 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke AbsolutePathHelpersBuild
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSBUILD_RUN_SCRIPT }} Run --args "AbsolutePathHelpersBuild"
-    - name: Upload Artifacts
+    - name: Upload absolute_path_helpers build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build___absolute_path_helpers___ABSOLUTEPATHHELPERSBUILD
-        path: ./.nuke/temp/artifacts-upload/*
+        path: ./.nuke/temp/artifacts-upload/absolute_path_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___ABSOLUTEPATHHELPERSBUILD
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -112,10 +124,16 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_LINUX_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_LINUX_CHECKOUT_SUBMODULES }}
         persist-credentials: true
-    - name: Download Artifacts
+    - name: Download absolute_path_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___absolute_path_helpers___*
+    - name: Download absolute_path_helpers build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: build___absolute_path_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -127,6 +145,20 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke TEST_LINUX
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_LINUX_RUN_SCRIPT }} Run --args "TEST_LINUX"
+    - name: Upload absolute_path_helpers post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___absolute_path_helpers___TEST_LINUX
+        path: ./.nuke/temp/artifacts-upload/absolute_path_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___$common___TEST_LINUX
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - ABSOLUTEPATHHELPERSBUILD
@@ -143,10 +175,16 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_WINDOWS_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_WINDOWS_CHECKOUT_SUBMODULES }}
         persist-credentials: true
-    - name: Download Artifacts
+    - name: Download absolute_path_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___absolute_path_helpers___*
+    - name: Download absolute_path_helpers build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: build___absolute_path_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -158,6 +196,20 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke TEST_WINDOWS
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_TEST_WINDOWS_RUN_SCRIPT }} Run --args "TEST_WINDOWS"
+    - name: Upload absolute_path_helpers post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___absolute_path_helpers___TEST_WINDOWS
+        path: ./.nuke/temp/artifacts-upload/absolute_path_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___$common___TEST_WINDOWS
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - ABSOLUTEPATHHELPERSBUILD
@@ -174,11 +226,21 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_CHECKOUT_SUBMODULES }}
         persist-credentials: true
-    - name: Download artifacts
+    - name: Download absolute_path_helpers pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___absolute_path_helpers___*
+    - name: Download absolute_path_helpers build artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
         pattern: build___absolute_path_helpers___*
+    - name: Download absolute_path_helpers post_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: post_test___absolute_path_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -190,11 +252,11 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke AbsolutePathHelpersPublish
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_ABSOLUTEPATHHELPERSPUBLISH_RUN_SCRIPT }} Run --args "AbsolutePathHelpersPublish"
-    - name: Upload Artifacts
+    - name: Upload common publish artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: publish___absolute_path_helpers___ABSOLUTEPATHHELPERSPUBLISH
-        path: ./.nuke/temp/artifacts-upload/*
+        name: publish___$common___ABSOLUTEPATHHELPERSPUBLISH
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -216,11 +278,11 @@ jobs:
         fetch-tags: true
         submodules: recursive
         persist-credentials: true
-    - name: Download Artifacts
+    - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
-        pattern: publish___*
+        pattern: '*___*'
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
     needs:
