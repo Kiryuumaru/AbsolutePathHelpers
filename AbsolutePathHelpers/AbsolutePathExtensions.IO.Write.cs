@@ -268,40 +268,41 @@ public static partial class AbsolutePathExtensions
     /// Note that this operation runs on a background thread via Task.Run to avoid blocking the calling thread
     /// during potentially long-running deletion operations.
     /// </remarks>
-    public static Task<bool> Delete(this AbsolutePath path, CancellationToken cancellationToken = default)
+    public static async Task<bool> Delete(this AbsolutePath path, CancellationToken cancellationToken = default)
     {
-        return Task.Run(() =>
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await Task.Yield();
+
+        if (path.FileExists())
         {
-            if (path.FileExists())
-            {
-                File.Delete(path);
+            File.Delete(path);
 
-                return true;
-            }
-            else if (path.DirectoryExists())
-            {
-                var fileMap = GetFileMap(path);
+            return true;
+        }
+        else if (path.DirectoryExists())
+        {
+            var fileMap = GetFileMap(path);
 
-                foreach (var (Link, _) in fileMap.SymbolicLinks)
+            foreach (var (Link, _) in fileMap.SymbolicLinks)
+            {
+                if (Link.DirectoryExists())
                 {
-                    if (Link.DirectoryExists())
-                    {
-                        Directory.Delete(Link);
-                    }
-                    else
-                    {
-                        File.Delete(Link);
-                    }
+                    Directory.Delete(Link);
                 }
-
-                Directory.Delete(path, true);
-
-                return true;
+                else
+                {
+                    File.Delete(Link);
+                }
             }
-            else
-            {
-                return false;
-            }
-        }, cancellationToken);
+
+            Directory.Delete(path, true);
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 }
