@@ -29,7 +29,7 @@ class Build : BaseNukeBuildHelpers
         {
             var app = context.Apps.Values.First();
             var projectPath = RootDirectory / "AbsolutePathHelpers" / "AbsolutePathHelpers.csproj";
-            var version = app.AppVersion.ToString();
+            var version = app.AppVersion.Version.ToString()!;
             var releaseNotes = "";
 
             if (app.BumpVersion != null)
