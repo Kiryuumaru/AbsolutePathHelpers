@@ -3,6 +3,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using YamlDotNet.Serialization;
 
+AbsolutePath t = "C:\\NetConduit\\gstreamer-dynamic-portable.tar.gz";
+var tEx = t.Parent! / t.Stem;
+await t.UncompressTo(tEx);
+
+return;
+
 Console.WriteLine("Testing 7z extraction support with SharpCompress...");
 
 // Test extracting a real 7z file
