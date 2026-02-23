@@ -28,7 +28,7 @@ public static partial class AbsolutePathExtensions
 			directory.CreateDirectory();
 
 			using var fileStream = File.OpenRead(archiveFile);
-			using var archive = SevenZipArchive.Open(fileStream);
+			using var archive = SevenZipArchive.OpenArchive(fileStream);
 
 			foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
 			{
