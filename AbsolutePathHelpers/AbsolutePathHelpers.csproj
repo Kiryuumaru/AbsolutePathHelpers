@@ -39,7 +39,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MultiFormatDataConverter" Version="0.2.69" />
+		<PackageReference Include="MultiFormatDataConverter" Version="0.2.71" />
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
 		<PackageReference Include="YamlDotNet" Version="17.1.0" />
 		<PackageReference Include="SharpCompress" Version="0.48.1" />
